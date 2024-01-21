@@ -33,11 +33,38 @@ impl StateTable {
         }
     
         let state_count = self.table.len();
-    
+
         // Add states to table
+        let mut first_row = true;
         for row in dfa.dfa.iter() {
-            let mut new_row: Vec<Option<usize>> = vec![];
+            if self.table.len() == 0 {
+                first_row = false;
+            }
+
             let mut i: usize = 0;
+            if first_row {
+                // Add first state to first state of table
+                for j in 0..self.alphabet.len() {
+                    if j == col_indices[i] {
+                        if let Some(state) = row[i] {
+                            if self.table[0][j].is_some() {
+                                panic!(
+                                    "Duplicate entry in starting state! table[0][{}] is already set to {} but trying to set it to {}",
+                                    j,
+                                    self.table[0][j].unwrap(),
+                                    state + state_count
+                                );
+                            }
+                            self.table[0][j] = Some(state + state_count);
+                        }
+                        i += 1;
+                    }
+                }
+                first_row = false;
+                continue;
+            }
+
+            let mut new_row: Vec<Option<usize>> = vec![];
             for j in 0..self.alphabet.len() {
                 if j == col_indices[i] {
                     if let Some(state) = row[i] {
@@ -92,8 +119,23 @@ impl StateTable {
     }
 
     pub fn get_token(&self, states: Vec<usize>) -> Option<Token> {
-        let state_hash = get_states_hash(&states);
-        self.token_map.get(&state_hash).map(|x| x.clone())
+        if states.len() == 0 {
+            return None;
+        }
+
+        let mut state_hash = get_states_hash(&states);
+        if let Some(token) = self.token_map.get(&state_hash) {
+            return Some(token.clone());
+        }
+
+        // Check for tokens only requiring an ending state
+        let ending_states = vec![0, states.last().unwrap().clone()];
+        state_hash = get_states_hash(&ending_states);
+        if let Some(token) = self.token_map.get(&state_hash) {
+            return Some(token.clone());
+        }
+
+        None
     }
 }
 
