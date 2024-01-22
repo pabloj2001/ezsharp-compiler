@@ -5,7 +5,7 @@ use std::io::Read;
 use crate::regular_expressions::StateTable;
 use crate::regular_expressions::init_state_table;
 
-const BUFFER_SIZE: usize = 4;
+const BUFFER_SIZE: usize = 1024;
 
 #[derive(Debug)]
 pub struct InvalidToken {
@@ -100,8 +100,6 @@ impl TokenBuffer {
         if c == '\0' {
             return Err(LexicalError::EndOfFile);
         }
-    
-        println!("First c: {}", c);
 
         let mut states: Vec<usize> = vec![];
         let mut state = 0;
@@ -115,8 +113,6 @@ impl TokenBuffer {
             c = self.advance_forward();
         }
 
-        println!("Last c: {}", c);
-
         // Check if the last state is an accepting state
         if state_table.is_accepting(state) {
             let lexeme = self.get_lexeme();
@@ -125,7 +121,6 @@ impl TokenBuffer {
                     // Get lexeme and advance sentinels
                     match token {
                         Token::Identifier(_) => {
-                            println!("Identifier: {}", lexeme);
                             return Ok(Token::Identifier(lexeme));
                         },
                         Token::Tint(_) => {
@@ -168,13 +163,20 @@ impl TokenBuffer {
     }
 
     fn set_sentinels(&mut self, loc: usize) -> char {
-        self.lexeme_begin = loc;
-        self.forward = loc;
-        if self.lexeme_begin >= BUFFER_SIZE {
-            self.lexeme_begin = self.lexeme_begin % BUFFER_SIZE;
-            self.forward = self.lexeme_begin;
+        if loc < self.lexeme_begin {
+            self.lexeme_begin = loc;
+            self.forward = loc;
             self.lb_buffer = (self.lb_buffer + 1) % 2;
             self.f_buffer = self.lb_buffer;
+        } else {
+            self.lexeme_begin = loc;
+            self.forward = loc;
+            if self.lexeme_begin >= BUFFER_SIZE {
+                self.lexeme_begin = self.lexeme_begin % BUFFER_SIZE;
+                self.forward = self.lexeme_begin;
+                self.lb_buffer = (self.lb_buffer + 1) % 2;
+                self.f_buffer = self.lb_buffer;
+            }
         }
         return self.get_forward_char();
     }
@@ -263,7 +265,7 @@ pub enum Token {
     Srparen,
 }
 
-pub fn lexical_analysis(filename: &String) -> Result<(), LexicalError> {    
+pub fn lexical_analysis(filename: &String) -> Result<Vec<Token>, LexicalError> {    
     // Initialize state table
     let state_table = init_state_table().map_err(|e| dbg!(e)).expect("State table initialization failed");
 
@@ -284,6 +286,7 @@ pub fn lexical_analysis(filename: &String) -> Result<(), LexicalError> {
         return Err(LexicalError::EndOfFile);
     }
 
+    let mut tokens: Vec<Token> = Vec::new();
     let mut invalid_tokens: Vec<InvalidToken> = Vec::new();
 
     let mut prev_buffer = 1;
@@ -302,7 +305,7 @@ pub fn lexical_analysis(filename: &String) -> Result<(), LexicalError> {
 
         match token_buffer.get_next_token(&state_table) {
             Ok(token) => {
-                dbg!(token);
+                tokens.push(token);
             },
             Err(e) => {
                 match e {
@@ -320,5 +323,5 @@ pub fn lexical_analysis(filename: &String) -> Result<(), LexicalError> {
         return Err(LexicalError::InvalidTokens(invalid_tokens));
     }
 
-    Ok(())
+    Ok(tokens)
 }

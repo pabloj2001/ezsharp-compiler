@@ -13,5 +13,8 @@ fn main() {
     let filename = &args[1];
 
     // Perform lexical analysis on the file
-    lexical_analysis(filename).map_err(|e| dbg!(e)).expect("Lexical analysis failed");
+    match lexical_analysis(filename) {
+        Ok(tokens) => println!("Lexical analysis completed successfully: {:?}", tokens),
+        Err(e) => println!("Lexical Error: {:?}", e),
+    }
 }
