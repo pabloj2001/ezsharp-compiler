@@ -108,7 +108,7 @@ impl TokenBuffer {
             if states.len() == 0 || state != states.last().unwrap().clone() {
                 states.push(state);
             }
-    
+            
             // Read the next character in the buffer
             c = self.advance_forward();
         }
@@ -209,7 +209,6 @@ impl TokenBuffer {
     }
 
     /**
-     * TODO: ERROR HERE
      * Get the lexeme from the lexeme begin to the forward sentinels and set the sentinels to the position of forward.
      */
     fn get_lexeme(&mut self) -> String {
@@ -235,17 +234,21 @@ pub enum Token {
     Tint(i32),
     Tdouble(f64),
     Kif,
+    Kthen,
     Kelse,
     Kfi,
     Kwhile,
     Kdo,
     Kod,
+    Kdef,
+    Kfed,
     Kreturn,
     Kand,
     Kor,
     Knot,
     Kint,
     Kdouble,
+    Kprint,
     Oplus,
     Ominus,
     Omultiply,
@@ -261,8 +264,8 @@ pub enum Token {
     Scomma,
     Ssemicolon,
     Speriod,
-    Slparen,
-    Srparen,
+    Soparen,
+    Scparen,
 }
 
 pub fn lexical_analysis(filename: &String) -> Result<Vec<Token>, LexicalError> {    

@@ -8,10 +8,28 @@ pub struct StateTable {
     accepting: Vec<bool>,
     alphabet: Vec<char>,
     token_map: HashMap<String, Token>,
+    alpha_index: usize,
+    digit_index: usize,
 }
 
 impl StateTable {
-    fn add_dfa(&mut self, dfa: &Dfa) {
+    fn new() -> StateTable {
+        StateTable {
+            table: vec![],
+            accepting: vec![false],
+            alphabet: vec![],
+            token_map: HashMap::new(),
+            alpha_index: 0,
+            digit_index: 0,
+        }
+    }
+
+    fn add_dfa(&mut self, dfa: &mut Dfa) {
+        // Check for errors
+        if dfa.accepting.len() != dfa.dfa.len() - 1 {
+            panic!("Accepting states length does not match number of states! {} != {}", dfa.accepting.len(), dfa.dfa.len());
+        }
+
         // Add alphabet to table
         let mut col_indices: Vec<usize> = vec![];
         for c in dfa.alphabet.iter() {
@@ -19,9 +37,15 @@ impl StateTable {
                 col_indices.push(index);
             } else {
                 self.alphabet.push(*c);
+                if *c == ALPHA {
+                    self.alpha_index = self.alphabet.len() - 1;
+                } else if *c == DIGIT {
+                    self.digit_index = self.alphabet.len() - 1;
+                }
                 col_indices.push(self.alphabet.len() - 1);
             }
         }
+        col_indices.sort();
     
         // Update previous states with new alphabet
         for row in self.table.iter_mut() {
@@ -32,11 +56,16 @@ impl StateTable {
             }
         }
     
-        let state_count = self.table.len();
+        let state_count = if self.table.len() == 0 { 0 } else { self.table.len() - 1 };
 
         // Add states to table
         let mut first_row = true;
-        for row in dfa.dfa.iter() {
+        for row in dfa.dfa.iter_mut() {
+            if row.len() != self.alphabet.len() {
+                // Fill in missing columns with None
+                row.resize(self.alphabet.len(), None);
+            }
+
             if self.table.len() == 0 {
                 first_row = false;
             }
@@ -100,13 +129,18 @@ impl StateTable {
     }
 
     fn get_alphabet_index(&self, input: char) -> Option<usize> {
+        if let Some(index) = self.alphabet.iter().position(|x| *x == input) {
+            return Some(index);
+        }
+
         let int_input = input as u8;
         if (int_input >= 0x41 && int_input <= 0x5A) || (int_input >= 0x61 && int_input <= 0x7A) {
-            return self.alphabet.iter().position(|x| *x == ALPHA);
+            return Some(self.alpha_index);
         } else if int_input >= 0x30 && int_input <= 0x39 {
-            return self.alphabet.iter().position(|x| *x == DIGIT);
+            return Some(self.digit_index);
         }
-        self.alphabet.iter().position(|x| *x == input)
+        
+        return None
     }
 
     pub fn get_next_state(&self, state: usize, input: char) -> Option<usize> {
@@ -135,7 +169,7 @@ impl StateTable {
             return Some(token.clone());
         }
 
-        None
+        return None;
     }
 }
 
@@ -148,37 +182,109 @@ struct Dfa {
 
 const ALPHA: char = 0x01 as char;
 const DIGIT: char = 0x02 as char;
+const KEYWORDS: [(&str, Token); 16] = [
+    ("if", Token::Kif),
+    ("then", Token::Kthen),
+    ("fi", Token::Kfi),
+    ("else", Token::Kelse),
+    ("while", Token::Kwhile),
+    ("do", Token::Kdo),
+    ("od", Token::Kod),
+    ("def", Token::Kdef),
+    ("fed", Token::Kfed),
+    ("return", Token::Kreturn),
+    ("and", Token::Kand),
+    ("or", Token::Kor),
+    ("not", Token::Knot),
+    ("int", Token::Kint),
+    ("double", Token::Kdouble),
+    ("print", Token::Kprint),
+];
+
+fn get_keyword_identifier_dfa() -> Dfa {
+    // Create alphabet and first state
+    let mut key_id_alphabet: Vec<char> = vec!['_', ALPHA, DIGIT];
+    let mut key_id_states: Vec<Vec<Option<usize>>> = vec![
+        vec![Some(1), Some(1), None],
+    ];
+
+    let mut curr_state = 2;
+    for keyword in KEYWORDS {
+        for c in keyword.0.chars() {
+            let index = key_id_alphabet.iter().position(|x| *x == c);
+            if index.is_none() {
+                key_id_alphabet.push(c);
+                key_id_states[0].push(Some(curr_state));
+                curr_state += 1;
+            }
+        }
+    }
+
+    for _ in 2..key_id_alphabet.len() {
+        key_id_states.push(vec![Some(1); key_id_alphabet.len()]);
+    }
+
+    // Create accepting states
+    let key_id_accepting: Vec<bool> = vec![true; key_id_alphabet.len() - 2];
+
+    // Create token map
+    let mut key_id_token_map: Vec<(Token, Vec<usize>)> = vec![];
+    for i in 0..key_id_alphabet.len() - 2 {
+        key_id_token_map.push((Token::Identifier(String::from("")), vec![0, i + 1]));
+    }
+
+    // Create states for each keyword
+    for keyword in KEYWORDS {
+        let mut chars = keyword.0.chars();
+        let curr_char = chars.nth(0).unwrap();
+        let mut prev_index = key_id_alphabet.iter().position(|x| *x == curr_char).unwrap();
+        let mut state_transitions: Vec<usize> = vec![];
+
+        for c in chars {
+            let state_index = key_id_alphabet.iter().position(|x| *x == c).unwrap();
+
+            // Set next state of previous state to the state for the current character            
+            key_id_states[prev_index - 1][state_index] = Some(state_index - 1);
+            // Add previous state to state transitions
+            state_transitions.push(prev_index - 1);
+
+            prev_index = state_index;
+        }
+
+        // Add last state to state transitions
+        state_transitions.push(prev_index - 1);
+        // Add token map for keyword
+        key_id_token_map.push((keyword.1.clone(), state_transitions));
+    }
+
+    Dfa {
+        dfa: key_id_states,
+        accepting: key_id_accepting,
+        alphabet: key_id_alphabet,
+        token_map: Some(key_id_token_map),
+    }
+}
 
 fn get_constant_dfas() -> Vec<Dfa> {
-    let id_alphabet: Vec<char> = vec!['_', ALPHA, DIGIT];
-    let id_dfa_states: Vec<Vec<Option<usize>>> = vec![
-        vec![Some(1), Some(1), None],
-        vec![Some(1), Some(1), Some(1)],
-    ];
-    let id_dfa_accepting: Vec<bool> = vec![false, true];
-    let id_token_map: Vec<(Token, Vec<usize>)> = vec![(Token::Identifier("".to_string()), vec![1])];
-    let id_dfa: Dfa = Dfa {
-        dfa: id_dfa_states,
-        accepting: id_dfa_accepting,
-        alphabet: id_alphabet,
-        token_map: Some(id_token_map),
-    };
+    // Keyword and Identifier DFA
+    let key_id_dfa = get_keyword_identifier_dfa();
 
-    let number_alphabet: Vec<char> = vec![DIGIT, '+', '-', '.', 'E'];
+    // Number DFA
+    let number_alphabet: Vec<char> = vec![DIGIT, '-', '.', 'E'];
     let number_dfa_states: Vec<Vec<Option<usize>>> = vec![
-        vec![Some(1), Some(2), Some(2), Some(3), None],   // 0
-        vec![Some(4), None, None, Some(5), None],         // 1
-        vec![Some(1), None, None, Some(3), None],         // 2
-        vec![Some(6), None, None, None, None],            // 3
-        vec![Some(4), None, None, Some(7), None],         // 4
-        vec![Some(6), None, None, None, None],            // 5
-        vec![Some(6), None, None, None, Some(8)],         // 6
-        vec![Some(9), None, None, None, None],            // 7
-        vec![None, Some(10), Some(10), None, None],       // 8
-        vec![Some(9), None, None, None, None],            // 9
-        vec![Some(9), None, None, None, None],            // 10
+        vec![Some(1), Some(2), Some(3), None],    // 0
+        vec![Some(4), None, Some(5), None],       // 1
+        vec![Some(1), None, Some(3), None],       // 2
+        vec![Some(6), None, None, None],          // 3
+        vec![Some(4), None, Some(7), None],       // 4
+        vec![Some(6), None, None, None],          // 5
+        vec![Some(6), None, None, Some(8)],       // 6
+        vec![Some(9), None, None, None],          // 7
+        vec![None, Some(10), None, None],         // 8
+        vec![Some(9), None, None, None],          // 9
+        vec![Some(9), None, None, None],          // 10
     ];
-    let number_dfa_accepting: Vec<bool> = vec![false, true, false, false, true, true, true, true, false, true, false];
+    let number_dfa_accepting: Vec<bool> = vec![true, true, true, true, true, true, true, false, true, false];
     let number_token_map: Vec<(Token, Vec<usize>)> = vec![
         (Token::Tint(0), vec![1]),
         (Token::Tint(0), vec![1, 4]),
@@ -188,6 +294,8 @@ fn get_constant_dfas() -> Vec<Dfa> {
         (Token::Tdouble(0.0), vec![0, 6]),
         (Token::Tdouble(0.0), vec![0, 7]),
         (Token::Tdouble(0.0), vec![0, 9]),
+        (Token::Ominus, vec![2]),
+        (Token::Speriod, vec![3]),
     ];
     let number_dfa: Dfa = Dfa {
         dfa: number_dfa_states,
@@ -196,6 +304,7 @@ fn get_constant_dfas() -> Vec<Dfa> {
         token_map: Some(number_token_map),
     };
 
+    // Comparator DFA
     let comparator_alphabet: Vec<char> = vec!['=', '<', '>'];
     let comparator_dfa_states: Vec<Vec<Option<usize>>> = vec![
         vec![Some(1), Some(3), Some(5)],
@@ -205,7 +314,7 @@ fn get_constant_dfas() -> Vec<Dfa> {
         vec![None, None, None],
         vec![Some(2), None, None],
     ];
-    let comparator_dfa_accepting: Vec<bool> = vec![false, true, true, true, true, true];
+    let comparator_dfa_accepting: Vec<bool> = vec![true, true, true, true, true];
     let comparator_token_map: Vec<(Token, Vec<usize>)> = vec![
         (Token::Oassign, vec![1]),
         (Token::Oequal, vec![1, 2]),
@@ -222,23 +331,64 @@ fn get_constant_dfas() -> Vec<Dfa> {
         token_map: Some(comparator_token_map),
     };
 
-    vec![id_dfa, number_dfa, comparator_dfa]
+    // Separator DFA
+    let separator_alphabet: Vec<char> = vec![';', ',', '(', ')'];
+    let separator_dfa_states: Vec<Vec<Option<usize>>> = vec![
+        vec![Some(1), Some(2), Some(3), Some(4)],
+        vec![None],
+        vec![None],
+        vec![None],
+        vec![None],
+    ];
+    let separator_dfa_accepting: Vec<bool> = vec![true, true, true, true];
+    let separator_token_map: Vec<(Token, Vec<usize>)> = vec![
+        (Token::Ssemicolon, vec![1]),
+        (Token::Scomma, vec![2]),
+        (Token::Soparen, vec![3]),
+        (Token::Scparen, vec![4]),
+    ];
+    let separator_dfa: Dfa = Dfa {
+        dfa: separator_dfa_states,
+        accepting: separator_dfa_accepting,
+        alphabet: separator_alphabet,
+        token_map: Some(separator_token_map),
+    };
+
+    // Operator DFA
+    let operator_alphabet: Vec<char> = vec!['+', '*', '/', '%'];
+    let operator_dfa_states: Vec<Vec<Option<usize>>> = vec![
+        vec![Some(1), Some(2), Some(3), Some(4)],
+        vec![None],
+        vec![None],
+        vec![None],
+        vec![None],
+    ];
+    let operator_dfa_accepting: Vec<bool> = vec![true, true, true, true];
+    let operator_token_map: Vec<(Token, Vec<usize>)> = vec![
+        (Token::Oplus, vec![1]),
+        (Token::Omultiply, vec![2]),
+        (Token::Odivide, vec![3]),
+        (Token::Omod, vec![4]),
+    ];
+    let operator_dfa: Dfa = Dfa {
+        dfa: operator_dfa_states,
+        accepting: operator_dfa_accepting,
+        alphabet: operator_alphabet,
+        token_map: Some(operator_token_map),
+    };
+
+    vec![key_id_dfa, number_dfa, comparator_dfa, separator_dfa, operator_dfa]
 }
 
 pub fn init_state_table() -> Result<StateTable, String> {
-    let mut table = StateTable {
-        table: vec![],
-        accepting: vec![],
-        alphabet: vec![],
-        token_map: HashMap::new(),
-    };
+    let mut table = StateTable::new();
 
-    let dfas = get_constant_dfas();
-    for dfa in dfas.iter() {
+    let mut dfas = get_constant_dfas();
+    for dfa in dfas.iter_mut() {
         table.add_dfa(dfa);
     }
 
-    dbg!(&table);
+    // dbg!(&table);
     Ok(table)
 }
 

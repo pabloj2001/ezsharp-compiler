@@ -1,1 +1,2 @@
-int x=23;.
+// Hello world
+int x = 2.3 + 10;.
