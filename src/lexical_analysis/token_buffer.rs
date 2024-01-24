@@ -1,37 +1,18 @@
-use std::fmt::Debug;
-use std::fs::File;
-use std::io::Read;
+use super::constants::BUFFER_SIZE;
+use super::token::{Token, InvalidToken, LexicalError};
+use super::transition_table::TransitionTable;
 
-use crate::regular_expressions::StateTable;
-use crate::regular_expressions::init_state_table;
-
-const BUFFER_SIZE: usize = 1024;
-
-#[derive(Debug)]
-pub struct InvalidToken {
-    lexeme: String,
-    line: usize,
-}
-
-#[derive(Debug)]
-pub enum LexicalError {
-    FileOpenError(String),
-    FileReadError(String),
-    InvalidTokens(Vec<InvalidToken>),
-    EndOfFile,
-}
-
-struct TokenBuffer {
-    buffers: [[u8; BUFFER_SIZE]; 2],
+pub struct TokenBuffer {
+    pub buffers: [[u8; BUFFER_SIZE]; 2],
     lexeme_begin: usize,
     forward: usize,
-    lb_buffer: usize,
-    f_buffer: usize,
+    pub lb_buffer: usize,
+    pub f_buffer: usize,
     lines_read: usize,
 }
 
 impl TokenBuffer {
-    fn new() -> TokenBuffer {
+    pub fn new() -> TokenBuffer {
         TokenBuffer {
             buffers: [[0; BUFFER_SIZE]; 2],
             lexeme_begin: 0,
@@ -42,7 +23,7 @@ impl TokenBuffer {
         }
     }
 
-    fn get_next_token(&mut self, state_table: &StateTable) -> Result<Token, LexicalError> {
+    pub fn get_next_token(&mut self, transition_table: &TransitionTable) -> Result<Token, LexicalError> {
         // Read the next character in the buffer
         let mut c = self.get_forward_char();
     
@@ -103,7 +84,7 @@ impl TokenBuffer {
 
         let mut states: Vec<usize> = vec![];
         let mut state = 0;
-        while let Some(new_state) = state_table.get_next_state(state, c) {
+        while let Some(new_state) = transition_table.get_next_state(state, c) {
             state = new_state;
             if states.len() == 0 || state != states.last().unwrap().clone() {
                 states.push(state);
@@ -114,9 +95,9 @@ impl TokenBuffer {
         }
 
         // Check if the last state is an accepting state
-        if state_table.is_accepting(state) {
+        if transition_table.is_accepting(state) {
             let lexeme = self.get_lexeme();
-            match state_table.get_token(states) {
+            match transition_table.get_token(states) {
                 Some(token) => {
                     // Get lexeme and advance sentinels
                     match token {
@@ -226,105 +207,4 @@ impl TokenBuffer {
         self.set_sentinels(self.forward);
         return lexeme;
     }
-}
-
-#[derive(Debug, Clone)]
-pub enum Token {
-    Identifier(String),
-    Tint(i32),
-    Tdouble(f64),
-    Kif,
-    Kthen,
-    Kelse,
-    Kfi,
-    Kwhile,
-    Kdo,
-    Kod,
-    Kdef,
-    Kfed,
-    Kreturn,
-    Kand,
-    Kor,
-    Knot,
-    Kint,
-    Kdouble,
-    Kprint,
-    Oplus,
-    Ominus,
-    Omultiply,
-    Odivide,
-    Omod,
-    Oassign,
-    Oequal,
-    Olt,
-    Olte,
-    Ogt,
-    Ogte,
-    Onot,
-    Scomma,
-    Ssemicolon,
-    Speriod,
-    Soparen,
-    Scparen,
-}
-
-pub fn lexical_analysis(filename: &String) -> Result<Vec<Token>, LexicalError> {    
-    // Initialize state table
-    let state_table = init_state_table().map_err(|e| dbg!(e)).expect("State table initialization failed");
-
-    // Open file
-    let mut file = File::open(filename).map_err(|e| LexicalError::FileOpenError(e.to_string()))?;
-
-    // Create double buffer
-    let mut token_buffer = TokenBuffer::new();
-
-    // Clear first buffer
-    for i in 0..BUFFER_SIZE {
-        token_buffer.buffers[0][i] = 0;
-    }
-    // Read first buffer
-    let read_size = file.read(&mut token_buffer.buffers[0]).map_err(|e| LexicalError::FileReadError(e.to_string()))?;
-    if read_size == 0 {
-        // Empty file
-        return Err(LexicalError::EndOfFile);
-    }
-
-    let mut tokens: Vec<Token> = Vec::new();
-    let mut invalid_tokens: Vec<InvalidToken> = Vec::new();
-
-    let mut prev_buffer = 1;
-    loop {
-        // Check if next buffer should be read
-        if token_buffer.lb_buffer == token_buffer.f_buffer && prev_buffer != token_buffer.lb_buffer {
-            // Clear prev buffer
-            for i in 0..BUFFER_SIZE {
-                token_buffer.buffers[prev_buffer][i] = 0;
-            }
-
-            // Read next buffer
-            file.read(&mut token_buffer.buffers[prev_buffer]).map_err(|e| LexicalError::FileReadError(e.to_string()))?;
-            prev_buffer = token_buffer.lb_buffer;
-        }
-
-        match token_buffer.get_next_token(&state_table) {
-            Ok(token) => {
-                tokens.push(token);
-            },
-            Err(e) => {
-                match e {
-                    LexicalError::EndOfFile => break,
-                    LexicalError::InvalidTokens(inv_token) => {
-                        invalid_tokens.extend(inv_token);
-                    },
-                    _ => return Err(e),
-                }
-            }
-        };
-    }
-
-    if invalid_tokens.len() > 0 {
-        return Err(LexicalError::InvalidTokens(invalid_tokens));
-    }
-
-    Ok(tokens)
 }

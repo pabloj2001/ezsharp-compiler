@@ -1,8 +1,6 @@
-mod lexical;
-mod regular_expressions;
+mod lexical_analysis;
 
 use std::env;
-use lexical::lexical_analysis;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -13,7 +11,7 @@ fn main() {
     let filename = &args[1];
 
     // Perform lexical analysis on the file
-    match lexical_analysis(filename) {
+    match lexical_analysis::perform_lexical_analysis(filename) {
         Ok(tokens) => println!("Lexical analysis completed successfully: {:?}", tokens),
         Err(e) => println!("Lexical Error: {:?}", e),
     }
