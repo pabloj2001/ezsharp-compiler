@@ -12,7 +12,7 @@ pub enum LexicalError {
     EndOfFile,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Identifier(String),
     Tint(i32),

@@ -13,7 +13,7 @@ use token_buffer::TokenBuffer;
 
 pub fn perform_lexical_analysis(filename: &String) -> Result<Vec<Token>, LexicalError> {    
     // Initialize state table
-    let state_table = init_transition_table().map_err(|e| dbg!(e)).expect("State table initialization failed");
+    let state_table = init_transition_table();
 
     // Open file
     let mut file = File::open(filename).map_err(|e| LexicalError::FileOpenError(e.to_string()))?;

@@ -46,13 +46,14 @@ impl TokenBuffer {
                     if next_c == '/' {
                         is_block_comment = false;
                         c = self.set_sentinels(self.forward + 2); // Skip the asterisk and slash
+                        continue;
                     }
                 } else {
                     if c == '\n' {
                         self.lines_read += 1;
                     }
-                    c = self.advance_sentinels();
                 }
+                c = self.advance_sentinels();
                 continue;
             }
 
@@ -97,7 +98,7 @@ impl TokenBuffer {
         // Check if the last state is an accepting state
         if transition_table.is_accepting(state) {
             let lexeme = self.get_lexeme();
-            match transition_table.get_token(states) {
+            match transition_table.get_token(&states) {
                 Some(token) => {
                     // Get lexeme and advance sentinels
                     match token {

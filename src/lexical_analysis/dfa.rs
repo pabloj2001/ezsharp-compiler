@@ -36,11 +36,10 @@ fn get_keyword_identifier_dfa() -> Dfa {
 
     // Create accepting states
     let key_id_accepting: Vec<bool> = vec![true; key_id_states.len() - 1];
-
     // Create token map
     let mut key_id_token_map: Vec<(Token, Vec<usize>)> = vec![];
     for i in 1..key_id_states.len() {
-        key_id_token_map.push((Token::Identifier(String::from("")), vec![0, i]));
+        key_id_token_map.push((Token::Identifier(String::new()), vec![i]));
     }
 
     // Create states for each keyword
@@ -94,8 +93,8 @@ pub fn get_constant_dfas() -> Vec<Dfa> {
     let number_token_map: Vec<(Token, Vec<usize>)> = vec![
         (Token::Tint(0), vec![1]),
         (Token::Speriod, vec![2]),
-        (Token::Tdouble(0.0), vec![0, 3]),
-        (Token::Tdouble(0.0), vec![0, 5]),
+        (Token::Tdouble(0.0), vec![3]),
+        (Token::Tdouble(0.0), vec![5]),
     ];
     let number_dfa: Dfa = Dfa {
         dfa: number_dfa_states,

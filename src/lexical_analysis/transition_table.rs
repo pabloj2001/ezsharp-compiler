@@ -1,133 +1,52 @@
-use std::collections::HashMap;
-
 use super::constants::{ALPHA, DIGIT};
 use super::token::Token;
 use super::dfa::{Dfa, get_constant_dfas};
 
+#[derive(Debug, PartialEq, Clone)]
+struct TokenStates {
+    token: Token,
+    states: Box<[usize]>,
+}
+
 #[derive(Debug)]
 pub struct TransitionTable {
-    table: Vec<Vec<Option<usize>>>,
-    accepting: Vec<bool>,
-    alphabet: Vec<char>,
-    token_map: HashMap<String, Token>,
+    table: Box<[Box<[Option<usize>]>]>,
+    accepting: Box<[bool]>,
+    alphabet: Box<[char]>,
     alphabet_indexes: Box<[usize]>,
     alphabet_start: usize,
-    alpha_index: usize,
-    digit_index: usize,
+    token_map: Box<[Option<Box<[Option<TokenStates>]>>]>,
 }
 
 impl TransitionTable {
-    fn new() -> TransitionTable {
-        TransitionTable {
-            table: vec![],
-            accepting: vec![false],
-            alphabet: vec![],
-            token_map: HashMap::new(),
-            alphabet_indexes: Box::new([]),
-            alphabet_start: 0,
-            alpha_index: 0,
-            digit_index: 0,
-        }
-    }
-
-    fn add_dfa(&mut self, dfa: &mut Dfa) {
-        // Check for errors
-        if dfa.accepting.len() != dfa.dfa.len() - 1 {
-            panic!("Accepting states length does not match number of states! {} != {}", dfa.accepting.len(), dfa.dfa.len());
+    fn init(dfas: &Vec<Dfa>) -> TransitionTable {
+        // Get number of states
+        let mut state_count = 1;
+        for dfa in dfas.iter() {
+            state_count += dfa.dfa.len() - 1;
         }
 
-        // Add alphabet to table
-        let mut col_indices: Vec<usize> = vec![];
-        for c in dfa.alphabet.iter() {
-            if let Some(index) = self.alphabet.iter().position(|x| *x == *c) {
-                col_indices.push(index);
-            } else {
-                if *c == ALPHA {
-                    self.alpha_index = self.alphabet.len();
-                } else if *c == DIGIT {
-                    self.digit_index = self.alphabet.len();
-                }
-                col_indices.push(self.alphabet.len());
-                self.alphabet.push(*c);
-            }
-        }
-    
-        // Update previous states with new alphabet
-        for row in self.table.iter_mut() {
-            for i in 0..col_indices.len() {
-                if col_indices[i] >= row.len() {
-                    row.push(None);
-                }
-            }
-        }
-    
-        let state_count = if self.table.len() == 0 { 0 } else { self.table.len() - 1 };
-
-        // Add states to table
-        let mut first_row = true;
-        for row in dfa.dfa.iter_mut() {
-            if row.len() != self.alphabet.len() {
-                // Fill in missing columns with None
-                row.resize(self.alphabet.len(), None);
-            }
-
-            if self.table.len() == 0 {
-                first_row = false;
-            }
-
-            if first_row {
-                // Add first state to first state of table
-                for i in 0..col_indices.len() {
-                    if let Some(state) = row[i] {
-                        if self.table[0][col_indices[i]].is_some() {
-                            panic!(
-                                "Duplicate entry in starting state! table[0][{}] ('{}') is already set to {} but trying to set it to {}",
-                                col_indices[i],
-                                self.alphabet[col_indices[i]],
-                                self.table[0][col_indices[i]].unwrap(),
-                                state + state_count
-                            );
-                        }
-                        self.table[0][col_indices[i]] = Some(state + state_count);
+        // Get alphabet
+        let mut alpha_index = 0;
+        let mut digit_index = 0;
+        let mut temp_alphabet = vec![];
+        for dfa in dfas.iter() {
+            for c in dfa.alphabet.iter() {
+                if !temp_alphabet.contains(c) {
+                    if *c == ALPHA {
+                        alpha_index = temp_alphabet.len();
+                    } else if *c == DIGIT {
+                        digit_index = temp_alphabet.len();
                     }
+                    temp_alphabet.push(*c);
                 }
-                first_row = false;
-                continue;
             }
+        }
 
-            let mut new_row: Vec<Option<usize>> = vec![None; self.alphabet.len()];
-            for i in 0..col_indices.len() {            
-                if let Some(state) = row[i] {
-                    new_row[col_indices[i]] = Some(state + state_count);
-                }
-            }
-            self.table.push(new_row);
-        }
-    
-        // Add accepting states to table
-        for accept in dfa.accepting.iter() {
-            self.accepting.push(*accept);
-        }
-    
-        // Add token map to table
-        if let Some(token_map) = &dfa.token_map {
-            for (token, states) in token_map.iter() {
-                let mapped_states: Vec<usize> = states.iter().map(|x| if *x > 0 { *x + state_count } else { 0 }).collect();
-                let state_hash = get_states_hash(&mapped_states);
-    
-                if self.token_map.contains_key(&state_hash) {
-                    panic!("Duplicate state hash in token map {}", state_hash);
-                }
-                self.token_map.insert(state_hash, token.clone());
-            }
-        }
-    }
-
-    fn finish_table(&mut self) {
-        // Find smallest and largest characters
+        // Find smallest and largest chars in alphabet
         let mut smallest_char = '0';
         let mut largest_char = 'z';
-        for c in self.alphabet.iter() {
+        for c in temp_alphabet.iter() {
             if *c == ALPHA || *c == DIGIT {
                 continue;
             }
@@ -140,28 +59,163 @@ impl TransitionTable {
         }
 
         // Create alphabet indexes
-        self.alphabet_start = smallest_char as usize;
-        self.alphabet_indexes = vec![0; (largest_char as usize) - self.alphabet_start + 1].into_boxed_slice();
-        for i in 0..self.alphabet.len() {
-            if self.alphabet[i] == ALPHA || self.alphabet[i] == DIGIT {
+        let alphabet_start = smallest_char as usize;
+        let mut alphabet_indexes = vec![0; (largest_char as usize) - alphabet_start + 1].into_boxed_slice();
+        for i in 0..temp_alphabet.len() {
+            if temp_alphabet[i] == ALPHA || temp_alphabet[i] == DIGIT {
                 continue;
             }
-            self.alphabet_indexes[(self.alphabet[i] as usize) - self.alphabet_start] = i + 1;
+            alphabet_indexes[(temp_alphabet[i] as usize) - alphabet_start] = i + 1;
         }
 
         // Set unset alphabet and digit indexes
-        for i in 0..self.alphabet_indexes.len() {
-            if self.alphabet_indexes[i] == 0 {
-                let char_index = i + self.alphabet_start;
+        for i in 0..alphabet_indexes.len() {
+            if alphabet_indexes[i] == 0 {
+                let char_index = i + alphabet_start;
                 if char_index >= 0x41 && char_index <= 0x5A {
-                    self.alphabet_indexes[i] = self.alpha_index + 1;
+                    alphabet_indexes[i] = alpha_index + 1;
                 } else if char_index >= 0x61 && char_index <= 0x7A {
-                    self.alphabet_indexes[i] = self.alpha_index + 1;
+                    alphabet_indexes[i] = alpha_index + 1;
                 } else if char_index >= 0x30 && char_index <= 0x39 {
-                    self.alphabet_indexes[i] = self.digit_index + 1;
+                    alphabet_indexes[i] = digit_index + 1;
                 }
             }
         }
+
+        // Create table
+        let mut table = TransitionTable {
+            table: vec![vec![None; temp_alphabet.len()].into_boxed_slice(); state_count].into_boxed_slice(),
+            accepting: vec![false; state_count].into_boxed_slice(),
+            alphabet: temp_alphabet.into_boxed_slice(),
+            alphabet_indexes,
+            alphabet_start,
+            token_map: vec![None; state_count].into_boxed_slice(),
+        };
+
+        // Add DFAs to table
+        let mut start_state = 1;
+        for dfa in dfas.iter() {
+            start_state = table.add_dfa(dfa, start_state);
+        }
+
+        table
+    }
+
+    fn add_dfa(&mut self, dfa: &Dfa, start_state: usize) -> usize {
+        // Check for errors
+        if dfa.accepting.len() != dfa.dfa.len() - 1 {
+            panic!("Accepting states length does not match number of states! {} != {}", dfa.accepting.len(), dfa.dfa.len());
+        }
+
+        for (row_i, row) in dfa.dfa.iter().enumerate() {
+            let table_state = if row_i == 0 { 0 } else { start_state + row_i - 1 };
+            for (col_i, col) in row.iter().enumerate() {
+                if let Some(state) = col {
+                    if *state >= dfa.dfa.len() {
+                        panic!("State out of bounds! {} >= {}", state, dfa.dfa.len());
+                    }
+
+                    // Get table alphabet index for current column
+                    let mut alpha_index = 0;
+                    for i in 0..self.alphabet.len() {
+                        if self.alphabet[i] == dfa.alphabet[col_i] {
+                            alpha_index = i;
+                            break;
+                        }
+                    }
+
+                    if self.table[table_state][alpha_index].is_some() {
+                        panic!(
+                            "Duplicate entry in table! table[{}][{}] ('{}') is already set to {} but trying to set it to {}",
+                            table_state,
+                            alpha_index,
+                            self.alphabet[alpha_index],
+                            self.table[table_state][alpha_index].unwrap(),
+                            state + start_state - 1
+                        );
+                    }
+
+                    self.table[table_state][alpha_index] = Some(state + start_state - 1);
+                }
+            }
+        }
+    
+        // Add accepting states to table
+        for (accept_i, accept) in dfa.accepting.iter().enumerate() {
+            self.accepting[start_state + accept_i] = accept.clone();
+        }
+    
+        // Add token map to table
+        if let Some(token_map) = &dfa.token_map {
+            for (token, states) in token_map.iter() {
+                if states.len() == 0 {
+                    panic!("Token map states length is 0 for token {:?}!", token);
+                }
+
+                let mapped_states = (states.iter().map(|x| *x + start_state - 1).collect::<Vec<usize>>()).into_boxed_slice();
+                let last_state = mapped_states.last().unwrap().clone();
+
+                let curr_token_states = Some(TokenStates { token: token.clone(), states: mapped_states });
+                if let Some(token_list) = &self.token_map[last_state] {
+                    // Make sure token doesn't already exist for states
+                    if token_list.contains(&curr_token_states) {
+                        panic!("Token {:?} already exists for state {} in token map!", token, last_state);
+                    }
+                }
+
+                // Add token to token map
+                let new_token_states = 
+                    self.add_token_state(&self.token_map[last_state], curr_token_states.unwrap());
+                self.token_map[last_state] = Some(new_token_states);
+            }
+        }
+
+        // Return new start state
+        start_state + dfa.dfa.len() - 1
+    }
+
+    fn add_token_state(&self, curr_token_states: &Option<Box<[Option<TokenStates>]>>, new_token_states: TokenStates) -> Box<[Option<TokenStates>]> {
+        if curr_token_states.is_none() {
+            return vec![Some(new_token_states)].into_boxed_slice();
+        }
+
+        let curr_token_states = curr_token_states.clone().unwrap();
+
+        let mut size = curr_token_states.len() + 1;
+        let mut new_states: Box<[Option<TokenStates>]> = vec![None; size].into_boxed_slice();
+        
+        let mut has_collisions = true;
+        while has_collisions {
+            has_collisions = false;
+
+            // Add new token states
+            let mut hash = self.get_states_hash(&new_token_states.states, size);
+            new_states[hash] = Some(new_token_states.clone());
+            
+            // Add old token states
+            for i in 0..curr_token_states.len() {
+                if let Some(token_states) = &curr_token_states[i] {
+                    hash = self.get_states_hash(&token_states.states, size);
+                    if new_states[hash].is_some() {
+                        size += 1;
+                        new_states = vec![None; size].into_boxed_slice();
+                        has_collisions = true;
+                        break;
+                    }
+                    new_states[hash] = Some(token_states.clone());
+                }
+            }
+        }
+
+        new_states
+    }
+
+    fn get_states_hash(&self, states: &[usize], state_mod: usize) -> usize {
+        let mut index = states[0];
+        for (i, state) in states.iter().skip(1).enumerate() {
+            index += state * usize::pow(7, (i + 1) as u32);
+        }
+        index % state_mod
     }
 
     fn get_alphabet_index(&self, input: char) -> Option<usize> {
@@ -192,41 +246,30 @@ impl TransitionTable {
         self.accepting[state]
     }
 
-    pub fn get_token(&self, states: Vec<usize>) -> Option<Token> {
+    pub fn get_token(&self, states: &[usize]) -> Option<Token> {
         if states.len() == 0 {
             return None;
         }
 
-        let mut state_hash = get_states_hash(&states);
-        if let Some(token) = self.token_map.get(&state_hash) {
-            return Some(token.clone());
-        }
-
-        // Check for tokens only requiring an ending state
-        let ending_states = vec![0, states.last().unwrap().clone()];
-        state_hash = get_states_hash(&ending_states);
-        if let Some(token) = self.token_map.get(&state_hash) {
-            return Some(token.clone());
+        if let Some(token_states) = &self.token_map[states.last().unwrap().clone()] {
+            if token_states.len() == 1 {
+                return Some(token_states[0].clone().unwrap().token.clone());
+            } else {
+                let state_hash = self.get_states_hash(states, token_states.len());
+                if let Some(token) = token_states[state_hash].clone() {
+                    return Some(token.token.clone());
+                }
+            }
         }
 
         return None;
     }
 }
 
-pub fn init_transition_table() -> Result<TransitionTable, String> {
-    let mut table = TransitionTable::new();
-
-    let mut dfas = get_constant_dfas();
-    for dfa in dfas.iter_mut() {
-        table.add_dfa(dfa);
-    }
-    table.finish_table();
-
+pub fn init_transition_table() -> TransitionTable {
+    let dfas = get_constant_dfas();
+    let table = TransitionTable::init(&dfas);
+    
     // dbg!(&table);
-    Ok(table)
-}
-
-pub fn get_states_hash(states: &Vec<usize>) -> String {
-    let str_states: Vec<String> = states.iter().map(|x| x.to_string()).collect();
-    str_states.join("-")
+    table
 }
