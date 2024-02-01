@@ -4,10 +4,10 @@ EZSharp is a Java-like language originally created by Professor Eugene Zima at W
 ## Features
 These are the necessary features needed for the project to be completed. They are updated as the project progresses.
 
-- [x] Lexical Analysis
-- [ ] Syntax Analysis
-- [ ] Semantic Analysis
-- [ ] Intermediary Code Generation
+1. ✅ Lexical Analysis
+2. ⬜ Syntax Analysis
+3. ⬜ Semantic Analysis
+4. ⬜ Intermediary Code Generation
 
 ## Building
 To build the project, you need to have Rust installed. You can install Rust by following the instructions on the [official website](https://www.rust-lang.org/tools/install).
