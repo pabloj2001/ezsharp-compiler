@@ -23,12 +23,12 @@ To compile an EZSharp file, you can run the following command in the root direct
 ```bash
 cargo run -- <path-to-ezsharp-file>
 ```
-Or you can run the compiled binary for the current release directly:
+Or you can run the compiled binary for the current release directly (tested on Windows 11 x86-64 only):
 ```bash
 ./releases/ezsharp_compiler.exe <path-to-ezsharp-file>
 ```
 
-Curently, the compiler only outputs the tokens found during Lexical Analysis. The output is logged to a file called `tokens.log` in a directory called `logs` in the root of the project. Any errors found during Lexical Analysis are also logged to a file called `lexical_errors.log` in the same directory.
+Currently, the compiler only outputs the tokens found during Lexical Analysis. The output is logged to a file called `tokens.log` in a directory called `logs` in the root of the project. Any errors found during Lexical Analysis are also logged to a file called `lexical_errors.log` in the same directory.
 
 This directory can be changed by providing the `--log-folder` option to the compiler:
 ```bash
@@ -36,7 +36,7 @@ cargo run -- <path-to-ezsharp-file> --log-folder <path-to-log-folder>
 ```
 
 ## Examples
-The `test_programs` directory contains some example EZSharp programs that can be used to test the compiler.
+The `test_programs` directory contains some sample EZSharp programs that can be used to test the compiler.
 
 Given the following EZSharp program in a file called `/test_programs/Test0.cp`:
 ```
@@ -46,7 +46,7 @@ int x = 23#3;.
 
 It can be compiled by running the following command in the root directory of the project:
 ```bash
-cargo run -- test_programs/Test1.cp
+cargo run -- test_programs/Test0.cp
 ```
 
 Which outputs the following tokens to the `tokens.log` file:
