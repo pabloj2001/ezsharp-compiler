@@ -11,7 +11,7 @@ use transition_table::init_transition_table;
 use token::{Token, InvalidToken, LexicalError};
 use token_buffer::TokenBuffer;
 
-pub fn perform_lexical_analysis(filename: &String) -> Result<Vec<Token>, LexicalError> {    
+pub fn perform_lexical_analysis(filename: &String) -> Result<(Vec<Token>, LexicalError), LexicalError> {    
     // Initialize state table
     let state_table = init_transition_table();
 
@@ -29,7 +29,7 @@ pub fn perform_lexical_analysis(filename: &String) -> Result<Vec<Token>, Lexical
     let read_size = file.read(&mut token_buffer.buffers[0]).map_err(|e| LexicalError::FileReadError(e.to_string()))?;
     if read_size == 0 {
         // Empty file
-        return Err(LexicalError::EndOfFile);
+        return Err(LexicalError::EmptyFile);
     }
 
     let mut tokens: Vec<Token> = Vec::new();
@@ -65,9 +65,9 @@ pub fn perform_lexical_analysis(filename: &String) -> Result<Vec<Token>, Lexical
         };
     }
 
-    if invalid_tokens.len() > 0 {
-        return Err(LexicalError::InvalidTokens(invalid_tokens));
-    }
+    // if invalid_tokens.len() > 0 {
+    //     return Err(LexicalError::InvalidTokens(invalid_tokens));
+    // }
 
-    Ok(tokens)
+    Ok((tokens, LexicalError::InvalidTokens(invalid_tokens)))
 }

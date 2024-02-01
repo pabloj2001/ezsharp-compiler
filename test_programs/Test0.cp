@@ -1,2 +1,2 @@
 // Hello world
-int/** wow */x = 23.3;.
+int x = 23#3;.
