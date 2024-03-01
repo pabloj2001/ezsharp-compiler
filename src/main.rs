@@ -1,4 +1,5 @@
 mod lexical_analysis;
+mod syntax_analysis;
 mod logger;
 
 use std::env;
@@ -29,17 +30,25 @@ fn main() {
     }
 
     // Perform lexical analysis on the file
-    match lexical_analysis::perform_lexical_analysis(filename) {
-        Ok((tokens, errors)) => {
+    let lexical_result = lexical_analysis::perform_lexical_analysis(filename);
+    let tokens: Vec<lexical_analysis::Token> = match lexical_result {
+        Ok(tokens) => {
             logger::log_to_file(
                 &tokens,
                 &FileLogAttributes::new((log_folder.clone() + "/tokens.log").to_string(), false),
             ).unwrap();
+            logger::clear_log_file((log_folder.clone() + "/lexical_errors.log").to_string()).unwrap();
+            tokens
+        },
+        Err(e) => {
             logger::log_to_file(
-                &errors,
+                &e,
                 &FileLogAttributes::new((log_folder.clone() + "/lexical_errors.log").to_string(), false),
             ).unwrap();
+            panic!("Lexical errors found. Check logs for more information.");
         },
-        Err(e) => println!("Lexical Error: {:?}", e),
-    }
+    };
+
+    // Perform syntax analysis on the file
+    syntax_analysis::perform_syntax_analysis(tokens);
 }

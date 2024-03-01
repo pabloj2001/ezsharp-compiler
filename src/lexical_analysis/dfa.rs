@@ -131,20 +131,24 @@ pub fn get_constant_dfas() -> Vec<Dfa> {
     };
 
     // Separator DFA
-    let separator_alphabet: Vec<char> = vec![';', ',', '(', ')'];
+    let separator_alphabet: Vec<char> = vec![';', ',', '(', ')', '[', ']'];
     let separator_dfa_states: Vec<Vec<Option<usize>>> = vec![
-        vec![Some(1), Some(2), Some(3), Some(4)],
+        vec![Some(1), Some(2), Some(3), Some(4), Some(5), Some(6)],
+        vec![None],
+        vec![None],
         vec![None],
         vec![None],
         vec![None],
         vec![None],
     ];
-    let separator_dfa_accepting: Vec<bool> = vec![true, true, true, true];
+    let separator_dfa_accepting: Vec<bool> = vec![true, true, true, true, true, true];
     let separator_token_map: Vec<(Token, Vec<usize>)> = vec![
         (Token::Ssemicolon, vec![1]),
         (Token::Scomma, vec![2]),
         (Token::Soparen, vec![3]),
         (Token::Scparen, vec![4]),
+        (Token::Sobracket, vec![5]),
+        (Token::Scbracket, vec![6]),
     ];
     let separator_dfa: Dfa = Dfa {
         dfa: separator_dfa_states,

@@ -4,6 +4,13 @@ pub trait Loggable {
     fn to_log_message(&self) -> String;
 }
 
+struct EmptyLog;
+impl Loggable for EmptyLog {
+    fn to_log_message(&self) -> String {
+        String::new()
+    }
+}
+
 pub struct FileLogAttributes {
     filename: String,
     append: bool,
@@ -44,4 +51,8 @@ where
         .map_err(|e| e.to_string())?;
 
     Ok(())
+}
+
+pub fn clear_log_file(filename: String) -> Result<(), String> {
+    log_to_file(&EmptyLog, &FileLogAttributes::new(filename, false))
 }
