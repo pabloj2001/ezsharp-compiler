@@ -1,0 +1,66 @@
+<program> ::= <fdecls> <declarations_seq>.
+
+<fdecls> ::= <fdec>; <fdecls> | e
+
+<fdec> ::= def <type> <fname> ( <params> ) <declarations_seq> fed
+
+<params> ::= <type_var><params2> | e
+<params2> ::= , <params> | e
+<type_var> ::= <type> <var>
+
+<fname> ::= <id>
+
+<declarations> ::= <decl>; <declarations> | e
+
+<declarations_seq> ::= <declarations> <statement_seq>
+
+<decl> := <type> <varlist>
+
+<type> := int | double
+
+<varlist> ::= <var><varlist2>
+<varlist2> ::= , <varlist> | e
+
+<statement_seq> ::= <statement><statement_seq2>
+<statement_seq2> ::= ; <statement_seq> | e
+
+<statement> ::=
+		<var> = <expr> |
+        <if> |
+        while <bexpr> do <statement_seq> od |
+        <built_in> <expr> | e
+
+<if> ::= if <bexpr> then <statement_seq> <else> fi
+<else> ::= else <statement_seq> | e
+
+<built_in> ::= print | return
+
+<expr> ::= <term> <expr2>
+<expr2> ::= + <expr> | - <expr> | e
+
+<term> ::= <factor> <term2>
+<term2> ::= * <term> | / <term> | % <term> | e
+
+<factor> ::= <id><factor2> | <number> | (<expr>)
+<factor2> ::= <var2> | (<exprseq>)
+
+<exprseq> ::= <expr><exprseq2> | e
+<exprseq2> ::= , <exprseq> | e
+
+<bexpr> ::= <bterm> <bexpr2>
+<bexpr2> ::= or <bexpr> | e
+
+<bterm> ::= <bfactor> <bterm2>
+<bterm2> ::= and <bterm> | e
+
+<bfactor> ::= (<bfactor2>) | not <bfactor>
+<bfactor2> ::= <bexpr> | <expr> <comp> <expr>
+
+<comp> ::= LT | GT | EQUAL | LTE | GTE | NOT
+
+<var> ::= <id><var2>
+<var2> ::= [<expr>] | e
+
+<id> ::= IDENTIFIER
+
+<number> ::= T_INT | T_DOUBLE

@@ -1,0 +1,80 @@
+First:
+<program>: def, int, double, IDENTIFIER, if, while, print, return, ;, .
+<fdecls>: def, e
+<fdec>: def
+<params>: int, double
+<params2>: COMMA, e
+<type_var>: int, double
+<fname>: IDENTIFIER
+<declarations>: int, double, e
+<declarations_seq>: int, double, IDENTIFIER, if, while, print, return, ;, e
+<decl>: int, double
+<type>: int, double
+<varlist>: IDENTIFIER
+<varlist2>: COMMA, e
+<statement_seq>: IDENTIFIER, if, while, print, return, ;, e
+<statement_seq2>: ;, e
+<statement>: IDENTIFIER, if, while, print, return, e
+<if>: if
+<else>: else, e
+<built_in>: print, return
+<expr>: IDENTIFIER, T_INT, T_DOUBLE, (
+<expr2>: +, -, e
+<term>: IDENTIFIER, T_INT, T_DOUBLE, (
+<term2>: *, /, %, e
+<factor>: IDENTIFIER, T_INT, T_DOUBLE, (
+<factor2>: [, (, e
+<exprseq>: IDENTIFIER, T_INT, T_DOUBLE, (, e
+<exprseq2>: COMMA, e
+<bexpr>: (, not
+<bexpr2>: or, e
+<bterm>: (, not
+<bterm2>: and, e
+<bfactor>: (, not
+<bfactor2>: (, not, IDENTIFIER, T_INT, T_DOUBLE
+<comp>: LT, GT, EQUAL, LTE, GTE, NOT
+<var>: IDENTIFIER
+<var2>: [, e
+<id>: IDENTIFIER
+<number>: T_INT, T_DOUBLE
+
+
+Follow:
+<program>: $
+<fdecls>: int, double, IDENTIFIER, if, while, print, return, ;, .
+<fdec>: ;
+<params>: )
+<params2>: )
+<type_var>: ), COMMA
+<fname>: (
+<declarations>: IDENTIFIER, if, while, print, return, ;, ., fed
+<declarations_seq>: ., fed
+<decl>: ;
+<type>: IDENTIFIER
+<varlist>: ;
+<varlist2>: ;
+<statement_seq>: ., fed, od, else, fi
+<statement_seq2>: ., fed, od, else, fi
+<statement>: ., fed, od, else, fi, ;
+<if>: ., fed, od, else, fi, ;
+<else>: fi
+<built_in>: IDENTIFIER, T_INT, T_DOUBLE, (
+<expr>: ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ]
+<expr2>: ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ]
+<term>: +, -, ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ]
+<term2>: +, -, ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ]
+<factor>: *, /, %, +, -, ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ]
+<factor2>: *, /, %, +, -, ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ]
+<exprseq>: )
+<exprseq2>: )
+<bexpr>: do, then, )
+<bexpr2>: do, then, )
+<bterm>: or, do, then, )
+<bterm2>: or, do, then, )
+<bfactor>: and, or, do, then, )
+<bfactor2>: and, or, do, then, )
+<comp>: IDENTIFIER, T_INT, T_DOUBLE, (
+<var>: ), COMMA, ;, =, *, /, %, +, -, ., fed, od, else, fi, LT, GT, EQUAL, LTE, GTE, NOT, ]
+<var2>: ), COMMA, ;, =, *, /, %, +, -, ., fed, od, else, fi, LT, GT, EQUAL, LTE, GTE, NOT, ]
+<id>: (, [, ), COMMA, ;, =, *, /, %, +, -, ., fed, od, else, fi, LT, GT, EQUAL, LTE, GTE, NOT, ]
+<number>: *, /, %, +, -, ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ]
