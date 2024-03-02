@@ -235,6 +235,15 @@ pub fn get_constant_first_sets() -> Box<[FirstSet]> {
                 FirstSetType::Terminal(Token::Soparen),
             ]),
         },
+        // <factor2>: [, (, e
+        FirstSet {
+            non_terminal: NonTerminal::Factor2,
+            first_set: Box::new([
+                FirstSetType::Terminal(Token::Sobracket),
+                FirstSetType::Terminal(Token::Soparen),
+                FirstSetType::Epsilon,
+            ]),
+        },
         // <exprseq>: IDENTIFIER, T_INT, T_DOUBLE, (, e
         FirstSet {
             non_terminal: NonTerminal::ExprSeq,
@@ -286,12 +295,15 @@ pub fn get_constant_first_sets() -> Box<[FirstSet]> {
                 FirstSetType::Epsilon,
             ]),
         },
-        // <bfactor>: (, not
+        // <bfactor>: (, not, IDENTIFIER, T_INT, T_DOUBLE
         FirstSet {
             non_terminal: NonTerminal::Bfactor,
             first_set: Box::new([
                 FirstSetType::Terminal(Token::Soparen),
                 FirstSetType::Terminal(Token::Knot),
+                FirstSetType::Terminal(Token::Identifier(String::new())),
+                FirstSetType::Terminal(Token::Tint(0)),
+                FirstSetType::Terminal(Token::Tdouble(0.0)),
             ]),
         },
         // <bfactor2>: (, not, IDENTIFIER, T_INT, T_DOUBLE

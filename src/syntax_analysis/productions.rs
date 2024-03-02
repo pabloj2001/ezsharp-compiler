@@ -32,13 +32,6 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::Fdecls),
             ].into_boxed_slice(),
         },
-        // <fdecls> ::= e
-        Production {
-            left: NonTerminal::Fdecls,
-            right: vec![
-                ProductionType::Epsilon,
-            ].into_boxed_slice(),
-        },
         // <fdec> ::= def <type> <fname> ( <params> ) <declarations_seq> fed
         Production {
             left: NonTerminal::Fdec,
@@ -61,26 +54,12 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::Params2),
             ].into_boxed_slice(),
         },
-        // <params> ::= e
-        Production {
-            left: NonTerminal::Params,
-            right: vec![
-                ProductionType::Epsilon,
-            ].into_boxed_slice(),
-        },
         // <params2> ::= , <params>
         Production {
             left: NonTerminal::Params2,
             right: vec![
                 ProductionType::Terminal(Token::Scomma),
                 ProductionType::NonTerminal(NonTerminal::Params),
-            ].into_boxed_slice(),
-        },
-        // <params2> ::= e
-        Production {
-            left: NonTerminal::Params2,
-            right: vec![
-                ProductionType::Epsilon,
             ].into_boxed_slice(),
         },
         // <type_var> ::= <type> <var>
@@ -105,13 +84,6 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::Decl),
                 ProductionType::Terminal(Token::Ssemicolon),
                 ProductionType::NonTerminal(NonTerminal::Declarations),
-            ].into_boxed_slice(),
-        },
-        // <declarations> ::= e
-        Production {
-            left: NonTerminal::Declarations,
-            right: vec![
-                ProductionType::Epsilon,
             ].into_boxed_slice(),
         },
         // <declarations_seq> ::= <declarations> <statement_seq>
@@ -160,13 +132,6 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::VarList),
             ].into_boxed_slice(),
         },
-        // <varlist2> ::= e
-        Production {
-            left: NonTerminal::VarList2,
-            right: vec![
-                ProductionType::Epsilon,
-            ].into_boxed_slice(),
-        },
         // <statement_seq> ::= <statement><statement_seq2>
         Production {
             left: NonTerminal::StatementSeq,
@@ -181,13 +146,6 @@ pub fn get_constant_productions() -> Box<[Production]> {
             right: vec![
                 ProductionType::Terminal(Token::Ssemicolon),
                 ProductionType::NonTerminal(NonTerminal::StatementSeq),
-            ].into_boxed_slice(),
-        },
-        // <statement_seq2> ::= e
-        Production {
-            left: NonTerminal::StatementSeq2,
-            right: vec![
-                ProductionType::Epsilon,
             ].into_boxed_slice(),
         },
         // <statement> ::= <var> = <expr>
@@ -225,13 +183,6 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::Expr),
             ].into_boxed_slice(),
         },
-        // <statement> ::= e
-        Production {
-            left: NonTerminal::Statement,
-            right: vec![
-                ProductionType::Epsilon,
-            ].into_boxed_slice(),
-        },
         // <if> ::= if <bexpr> then <statement_seq> <else> fi
         Production {
             left: NonTerminal::If,
@@ -250,13 +201,6 @@ pub fn get_constant_productions() -> Box<[Production]> {
             right: vec![
                 ProductionType::Terminal(Token::Kelse),
                 ProductionType::NonTerminal(NonTerminal::StatementSeq),
-            ].into_boxed_slice(),
-        },
-        // <else> ::= e
-        Production {
-            left: NonTerminal::Else,
-            right: vec![
-                ProductionType::Epsilon,
             ].into_boxed_slice(),
         },
         // <built_in> ::= print
@@ -297,13 +241,6 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::Expr),
             ].into_boxed_slice(),
         },
-        // <expr2> ::= e
-        Production {
-            left: NonTerminal::Expr2,
-            right: vec![
-                ProductionType::Epsilon,
-            ].into_boxed_slice(),
-        },
         // <term> ::= <factor> <term2>
         Production {
             left: NonTerminal::Term,
@@ -336,18 +273,12 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::Term),
             ].into_boxed_slice(),
         },
-        // <term2> ::= e
-        Production {
-            left: NonTerminal::Term2,
-            right: vec![
-                ProductionType::Epsilon,
-            ].into_boxed_slice(),
-        },
-        // <factor> ::= <var>
+        // <factor> ::= <id><factor2>
         Production {
             left: NonTerminal::Factor,
             right: vec![
-                ProductionType::NonTerminal(NonTerminal::Var),
+                ProductionType::NonTerminal(NonTerminal::Id),
+                ProductionType::NonTerminal(NonTerminal::Factor2),
             ].into_boxed_slice(),
         },
         // <factor> ::= <number>
@@ -366,11 +297,17 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::Terminal(Token::Scparen),
             ].into_boxed_slice(),
         },
-        // <factor> ::= <fname>(<exprseq>)
+        // <factor2> ::= <var2>
         Production {
-            left: NonTerminal::Factor,
+            left: NonTerminal::Factor2,
             right: vec![
-                ProductionType::NonTerminal(NonTerminal::Fname),
+                ProductionType::NonTerminal(NonTerminal::Var2),
+            ].into_boxed_slice(),
+        },
+        // <factor2> ::= (<exprseq>)
+        Production {
+            left: NonTerminal::Factor2,
+            right: vec![
                 ProductionType::Terminal(Token::Soparen),
                 ProductionType::NonTerminal(NonTerminal::ExprSeq),
                 ProductionType::Terminal(Token::Scparen),
@@ -384,26 +321,12 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::ExprSeq2),
             ].into_boxed_slice(),
         },
-        // <exprseq> ::= e
-        Production {
-            left: NonTerminal::ExprSeq,
-            right: vec![
-                ProductionType::Epsilon,
-            ].into_boxed_slice(),
-        },
         // <exprseq2> ::= , <exprseq>
         Production {
             left: NonTerminal::ExprSeq2,
             right: vec![
                 ProductionType::Terminal(Token::Scomma),
                 ProductionType::NonTerminal(NonTerminal::ExprSeq),
-            ].into_boxed_slice(),
-        },
-        // <exprseq2> ::= e
-        Production {
-            left: NonTerminal::ExprSeq2,
-            right: vec![
-                ProductionType::Epsilon,
             ].into_boxed_slice(),
         },
         // <bexpr> ::= <bterm> <bexpr2>
@@ -422,13 +345,6 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::Bexpr),
             ].into_boxed_slice(),
         },
-        // <bexpr2> ::= e
-        Production {
-            left: NonTerminal::Bexpr2,
-            right: vec![
-                ProductionType::Epsilon,
-            ].into_boxed_slice(),
-        },
         // <bterm> ::= <bfactor> <bterm2>
         Production {
             left: NonTerminal::Bterm,
@@ -445,18 +361,10 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::Bterm),
             ].into_boxed_slice(),
         },
-        // <bterm2> ::= e
-        Production {
-            left: NonTerminal::Bterm2,
-            right: vec![
-                ProductionType::Epsilon,
-            ].into_boxed_slice(),
-        },
-        // <bfactor> ::= (<bfactor2>
+        // <bfactor> ::= <bfactor2>
         Production {
             left: NonTerminal::Bfactor,
             right: vec![
-                ProductionType::Terminal(Token::Soparen),
                 ProductionType::NonTerminal(NonTerminal::Bfactor2),
             ].into_boxed_slice(),
         },
@@ -468,22 +376,20 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::Bfactor),
             ].into_boxed_slice(),
         },
-        // <bfactor2> ::= <bexpr>)
+        // <bfactor2> ::= <bexpr>
         Production {
             left: NonTerminal::Bfactor2,
             right: vec![
                 ProductionType::NonTerminal(NonTerminal::Bexpr),
-                ProductionType::Terminal(Token::Scparen),
             ].into_boxed_slice(),
         },
-        // <bfactor2> ::= <expr> <comp> <expr>)
+        // <bfactor2> ::= <expr> <comp> <expr>
         Production {
             left: NonTerminal::Bfactor2,
             right: vec![
                 ProductionType::NonTerminal(NonTerminal::Expr),
                 ProductionType::NonTerminal(NonTerminal::Comp),
                 ProductionType::NonTerminal(NonTerminal::Expr),
-                ProductionType::Terminal(Token::Scparen),
             ].into_boxed_slice(),
         },
         // <comp> ::= LT
@@ -540,16 +446,9 @@ pub fn get_constant_productions() -> Box<[Production]> {
         Production {
             left: NonTerminal::Var2,
             right: vec![
-                ProductionType::Terminal(Token::Soparen),
+                ProductionType::Terminal(Token::Sobracket),
                 ProductionType::NonTerminal(NonTerminal::Expr),
-                ProductionType::Terminal(Token::Scparen),
-            ].into_boxed_slice(),
-        },
-        // <var2> ::= e
-        Production {
-            left: NonTerminal::Var2,
-            right: vec![
-                ProductionType::Epsilon,
+                ProductionType::Terminal(Token::Scbracket),
             ].into_boxed_slice(),
         },
         // <id> ::= Identifier

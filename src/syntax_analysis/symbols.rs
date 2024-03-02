@@ -1,4 +1,4 @@
-pub const NUM_NON_TERMINALS: usize = 37;
+pub const NUM_NON_TERMINALS: usize = 38;
 pub const NUM_TERMINALS: usize = 39;
 
 macro_rules! enum_slice {
@@ -16,7 +16,7 @@ macro_rules! enum_slice {
 }
 
 enum_slice! {
-    #[derive(PartialEq, Clone, Copy)]
+    #[derive(Debug, PartialEq, Clone, Copy)]
     pub enum NonTerminal(NUM_NON_TERMINALS) {
         Program,
         Fdecls,
@@ -42,6 +42,7 @@ enum_slice! {
         Term,
         Term2,
         Factor,
+        Factor2,
         ExprSeq,
         ExprSeq2,
         Bexpr,

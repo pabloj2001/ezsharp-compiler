@@ -53,7 +53,7 @@
 <bterm> ::= <bfactor> <bterm2>
 <bterm2> ::= and <bterm> | e
 
-<bfactor> ::= (<bfactor2>) | not <bfactor>
+<bfactor> ::= <bfactor2> | not <bfactor>
 <bfactor2> ::= <bexpr> | <expr> <comp> <expr>
 
 <comp> ::= LT | GT | EQUAL | LTE | GTE | NOT

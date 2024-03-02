@@ -16,8 +16,8 @@ impl FollowSetType {
 }
 
 pub struct FollowSet {
-    non_terminal: NonTerminal,
-    follow_set: Box<[FollowSetType]>,
+    pub non_terminal: NonTerminal,
+    pub follow_set: Box<[FollowSetType]>,
 }
 
 pub fn get_constant_follow_sets() -> Box<[FollowSet]> {
@@ -173,7 +173,7 @@ pub fn get_constant_follow_sets() -> Box<[FollowSet]> {
                 FollowSetType::Terminal(Token::Soparen),
             ]),
         },
-        // <expr>: ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ]
+        // <expr>: ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ], and, or, do, then
         FollowSet {
             non_terminal: NonTerminal::Expr,
             follow_set: Box::new([
@@ -192,9 +192,13 @@ pub fn get_constant_follow_sets() -> Box<[FollowSet]> {
                 FollowSetType::Terminal(Token::Ogte),
                 FollowSetType::Terminal(Token::Onot),
                 FollowSetType::Terminal(Token::Scbracket),
+                FollowSetType::Terminal(Token::Kand),
+                FollowSetType::Terminal(Token::Kor),
+                FollowSetType::Terminal(Token::Kdo),
+                FollowSetType::Terminal(Token::Kthen),
             ]),
         },
-        // <expr2>: ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ]
+        // <expr2>: ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ], and, or, do, then
         FollowSet {
             non_terminal: NonTerminal::Expr2,
             follow_set: Box::new([
@@ -213,9 +217,13 @@ pub fn get_constant_follow_sets() -> Box<[FollowSet]> {
                 FollowSetType::Terminal(Token::Ogte),
                 FollowSetType::Terminal(Token::Onot),
                 FollowSetType::Terminal(Token::Scbracket),
+                FollowSetType::Terminal(Token::Kand),
+                FollowSetType::Terminal(Token::Kor),
+                FollowSetType::Terminal(Token::Kdo),
+                FollowSetType::Terminal(Token::Kthen),
             ]),
         },
-        // <term>: +, -, ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ]
+        // <term>: +, -, ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ], and, or, do, then
         FollowSet {
             non_terminal: NonTerminal::Term,
             follow_set: Box::new([
@@ -236,9 +244,13 @@ pub fn get_constant_follow_sets() -> Box<[FollowSet]> {
                 FollowSetType::Terminal(Token::Ogte),
                 FollowSetType::Terminal(Token::Onot),
                 FollowSetType::Terminal(Token::Scbracket),
+                FollowSetType::Terminal(Token::Kand),
+                FollowSetType::Terminal(Token::Kor),
+                FollowSetType::Terminal(Token::Kdo),
+                FollowSetType::Terminal(Token::Kthen),
             ]),
         },
-        // <term2>: +, -, ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ]
+        // <term2>: +, -, ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ], and, or, do, then
         FollowSet {
             non_terminal: NonTerminal::Term2,
             follow_set: Box::new([
@@ -259,9 +271,13 @@ pub fn get_constant_follow_sets() -> Box<[FollowSet]> {
                 FollowSetType::Terminal(Token::Ogte),
                 FollowSetType::Terminal(Token::Onot),
                 FollowSetType::Terminal(Token::Scbracket),
+                FollowSetType::Terminal(Token::Kand),
+                FollowSetType::Terminal(Token::Kor),
+                FollowSetType::Terminal(Token::Kdo),
+                FollowSetType::Terminal(Token::Kthen),
             ]),
         },
-        // <factor>: *, /, %, +, -, ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ]
+        // <factor>: *, /, %, +, -, ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ], and, or, do, then
         FollowSet {
             non_terminal: NonTerminal::Factor,
             follow_set: Box::new([
@@ -285,6 +301,40 @@ pub fn get_constant_follow_sets() -> Box<[FollowSet]> {
                 FollowSetType::Terminal(Token::Ogte),
                 FollowSetType::Terminal(Token::Onot),
                 FollowSetType::Terminal(Token::Scbracket),
+                FollowSetType::Terminal(Token::Kand),
+                FollowSetType::Terminal(Token::Kor),
+                FollowSetType::Terminal(Token::Kdo),
+                FollowSetType::Terminal(Token::Kthen),
+            ]),
+        },
+        // <factor2>: *, /, %, +, -, ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ], and, or, do, then
+        FollowSet {
+            non_terminal: NonTerminal::Factor2,
+            follow_set: Box::new([
+                FollowSetType::Terminal(Token::Omultiply),
+                FollowSetType::Terminal(Token::Odivide),
+                FollowSetType::Terminal(Token::Omod),
+                FollowSetType::Terminal(Token::Oplus),
+                FollowSetType::Terminal(Token::Ominus),
+                FollowSetType::Terminal(Token::Speriod),
+                FollowSetType::Terminal(Token::Kfed),
+                FollowSetType::Terminal(Token::Kod),
+                FollowSetType::Terminal(Token::Kelse),
+                FollowSetType::Terminal(Token::Kfi),
+                FollowSetType::Terminal(Token::Ssemicolon),
+                FollowSetType::Terminal(Token::Scparen),
+                FollowSetType::Terminal(Token::Scomma),
+                FollowSetType::Terminal(Token::Oequal),
+                FollowSetType::Terminal(Token::Olt),
+                FollowSetType::Terminal(Token::Ogt),
+                FollowSetType::Terminal(Token::Olte),
+                FollowSetType::Terminal(Token::Ogte),
+                FollowSetType::Terminal(Token::Onot),
+                FollowSetType::Terminal(Token::Scbracket),
+                FollowSetType::Terminal(Token::Kand),
+                FollowSetType::Terminal(Token::Kor),
+                FollowSetType::Terminal(Token::Kdo),
+                FollowSetType::Terminal(Token::Kthen),
             ]),
         },
         // <exprseq>: )
@@ -367,7 +417,7 @@ pub fn get_constant_follow_sets() -> Box<[FollowSet]> {
                 FollowSetType::Terminal(Token::Soparen),
             ]),
         },
-        // <var>: ), COMMA, ;, =, *, /, %, +, -, ., fed, od, else, fi, LT, GT, EQUAL, LTE, GTE, NOT, ]
+        // <var>: ), COMMA, ;, =
         FollowSet {
             non_terminal: NonTerminal::Var,
             follow_set: Box::new([
@@ -375,26 +425,9 @@ pub fn get_constant_follow_sets() -> Box<[FollowSet]> {
                 FollowSetType::Terminal(Token::Scomma),
                 FollowSetType::Terminal(Token::Ssemicolon),
                 FollowSetType::Terminal(Token::Oassign),
-                FollowSetType::Terminal(Token::Omultiply),
-                FollowSetType::Terminal(Token::Odivide),
-                FollowSetType::Terminal(Token::Omod),
-                FollowSetType::Terminal(Token::Oplus),
-                FollowSetType::Terminal(Token::Ominus),
-                FollowSetType::Terminal(Token::Speriod),
-                FollowSetType::Terminal(Token::Kfed),
-                FollowSetType::Terminal(Token::Kod),
-                FollowSetType::Terminal(Token::Kelse),
-                FollowSetType::Terminal(Token::Kfi),
-                FollowSetType::Terminal(Token::Oequal),
-                FollowSetType::Terminal(Token::Olt),
-                FollowSetType::Terminal(Token::Ogt),
-                FollowSetType::Terminal(Token::Olte),
-                FollowSetType::Terminal(Token::Ogte),
-                FollowSetType::Terminal(Token::Onot),
-                FollowSetType::Terminal(Token::Scbracket),
             ]),
         },
-        // <var2>: ), COMMA, ;, =, *, /, %, +, -, ., fed, od, else, fi, LT, GT, EQUAL, LTE, GTE, NOT, ]
+        // <var2>: ), COMMA, ;, =, *, /, %, +, -, ., fed, od, else, fi, LT, GT, EQUAL, LTE, GTE, NOT, ], and, or, do, then
         FollowSet {
             non_terminal: NonTerminal::Var2,
             follow_set: Box::new([
@@ -419,9 +452,13 @@ pub fn get_constant_follow_sets() -> Box<[FollowSet]> {
                 FollowSetType::Terminal(Token::Ogte),
                 FollowSetType::Terminal(Token::Onot),
                 FollowSetType::Terminal(Token::Scbracket),
+                FollowSetType::Terminal(Token::Kand),
+                FollowSetType::Terminal(Token::Kor),
+                FollowSetType::Terminal(Token::Kdo),
+                FollowSetType::Terminal(Token::Kthen),
             ]),
         },
-        // <id>: (, [, ), COMMA, ;, =, *, /, %, +, -, ., fed, od, else, fi, LT, GT, EQUAL, LTE, GTE, NOT, ]
+        // <id>: (, [, ), COMMA, ;, =, *, /, %, +, -, ., fed, od, else, fi, LT, GT, EQUAL, LTE, GTE, NOT, ], and, or, do, then
         FollowSet {
             non_terminal: NonTerminal::Id,
             follow_set: Box::new([
@@ -448,9 +485,13 @@ pub fn get_constant_follow_sets() -> Box<[FollowSet]> {
                 FollowSetType::Terminal(Token::Ogte),
                 FollowSetType::Terminal(Token::Onot),
                 FollowSetType::Terminal(Token::Scbracket),
+                FollowSetType::Terminal(Token::Kand),
+                FollowSetType::Terminal(Token::Kor),
+                FollowSetType::Terminal(Token::Kdo),
+                FollowSetType::Terminal(Token::Kthen),
             ]),
         },
-        // <number>: *, /, %, +, -, ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ]
+        // <number>: *, /, %, +, -, ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ], and, or, do, then
         FollowSet {
             non_terminal: NonTerminal::Number,
             follow_set: Box::new([
@@ -474,6 +515,10 @@ pub fn get_constant_follow_sets() -> Box<[FollowSet]> {
                 FollowSetType::Terminal(Token::Ogte),
                 FollowSetType::Terminal(Token::Onot),
                 FollowSetType::Terminal(Token::Scbracket),
+                FollowSetType::Terminal(Token::Kand),
+                FollowSetType::Terminal(Token::Kor),
+                FollowSetType::Terminal(Token::Kdo),
+                FollowSetType::Terminal(Token::Kthen),
             ]),
         },
     ])
