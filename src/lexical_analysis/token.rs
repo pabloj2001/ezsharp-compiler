@@ -13,6 +13,8 @@ pub enum LexicalError {
     EmptyFile,
     EndOfFile,
     InvalidTokens(Vec<InvalidToken>),
+    InvalidToken(InvalidToken),
+    NoValidTokens,
 }
 
 impl Loggable for LexicalError {
@@ -31,8 +33,10 @@ impl Loggable for LexicalError {
                 }
                 log_message
             }
+            LexicalError::InvalidToken(token) => format!("Invalid token: {:?}", token),
             LexicalError::EmptyFile => String::from("File is empty"),
             LexicalError::EndOfFile => String::from("End of file"),
+            LexicalError::NoValidTokens => String::from("No valid tokens found"),
         }
     }
 
@@ -78,6 +82,17 @@ pub enum Token {
     Scparen,
     Sobracket,
     Scbracket,
+}
+
+impl Token {
+    pub fn equals_type(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Token::Identifier(_), Token::Identifier(_)) => true,
+            (Token::Tint(_), Token::Tint(_)) => true,
+            (Token::Tdouble(_), Token::Tdouble(_)) => true,
+            (x, y) => x == y,
+        }
+    }
 }
 
 impl Loggable for Token {
@@ -135,7 +150,29 @@ impl Loggable for Vec<Token> {
     fn to_log_message(&self) -> String {
         let mut log_message = String::from(self[0].to_log_message().as_str());
         for token in self.iter().skip(1) {
-            log_message.push_str(format!("\n{:?}", token).as_str());
+            log_message.push_str(token.to_log_message().as_str());
+        }
+        log_message
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ParsedToken {
+    pub token: Token,
+    pub line: usize,
+}
+
+impl Loggable for ParsedToken {
+    fn to_log_message(&self) -> String {
+        format!("{:?} on line {}\n", self.token, self.line)
+    }
+}
+
+impl Loggable for Vec<ParsedToken> {
+    fn to_log_message(&self) -> String {
+        let mut log_message = String::from(self[0].to_log_message().as_str());
+        for token in self.iter().skip(1) {
+            log_message.push_str(token.to_log_message().as_str());
         }
         log_message
     }

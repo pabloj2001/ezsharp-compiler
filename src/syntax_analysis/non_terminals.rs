@@ -1,4 +1,4 @@
-pub const NUM_NON_TERMINALS: usize = 38;
+pub const NUM_NON_TERMINALS: usize = 43;
 pub const NUM_TERMINALS: usize = 39;
 
 macro_rules! enum_slice {
@@ -51,6 +51,11 @@ enum_slice! {
         Bterm2,
         Bfactor,
         Bfactor2,
+        Exprb,
+        Exprb2,
+        Termb,
+        Termb2,
+        Factorb,
         Comp,
         Var,
         Var2,

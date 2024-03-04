@@ -30,8 +30,13 @@ First:
 <bexpr2>: or, e
 <bterm>: (, not
 <bterm2>: and, e
-<bfactor>: (, not, IDENTIFIER, T_INT, T_DOUBLE
+<bfactor>: (, not
 <bfactor2>: (, not, IDENTIFIER, T_INT, T_DOUBLE
+<exprb>: IDENTIFIER, T_INT, T_DOUBLE
+<exprb2>: +, -, e
+<termb>: IDENTIFIER, T_INT, T_DOUBLE
+<termb2>: *, /, %, e
+<factorb>: IDENTIFIER, T_INT, T_DOUBLE
 <comp>: LT, GT, EQUAL, LTE, GTE, NOT
 <var>: IDENTIFIER
 <var2>: [, e
@@ -72,7 +77,12 @@ Follow:
 <bterm>: or, do, then, )
 <bterm2>: or, do, then, )
 <bfactor>: and, or, do, then, )
-<bfactor2>: and, or, do, then, )
+<bfactor2>: )
+<exprb>: LT, GT, EQUAL, LTE, GTE, NOT, )
+<exprb2>: LT, GT, EQUAL, LTE, GTE, NOT, )
+<termb>: +, -, LT, GT, EQUAL, LTE, GTE, NOT, )
+<termb2>: +, -, LT, GT, EQUAL, LTE, GTE, NOT, )
+<factorb>: *, /, %, +, -, LT, GT, EQUAL, LTE, GTE, NOT, )
 <comp>: IDENTIFIER, T_INT, T_DOUBLE, (
 <var>: ), COMMA, ;, =
 <var2>: ), COMMA, ;, =, *, /, %, +, -, ., fed, od, else, fi, LT, GT, EQUAL, LTE, GTE, NOT, ], and, or, do, then

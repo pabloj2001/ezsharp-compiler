@@ -1,5 +1,5 @@
 use super::constants::BUFFER_SIZE;
-use super::token::{Token, InvalidToken, LexicalError};
+use super::token::{Token, InvalidToken, LexicalError, ParsedToken};
 use super::transition_table::TransitionTable;
 
 pub struct TokenBuffer {
@@ -23,7 +23,7 @@ impl TokenBuffer {
         }
     }
 
-    pub fn get_next_token(&mut self, transition_table: &TransitionTable) -> Result<Token, LexicalError> {
+    pub fn get_next_token(&mut self, transition_table: &TransitionTable) -> Result<ParsedToken, LexicalError> {
         // Read the next character in the buffer
         let mut c = self.get_forward_char();
     
@@ -70,6 +70,8 @@ impl TokenBuffer {
                     c = self.set_sentinels(self.forward + 2); // Skip the slash and asterisk
                     continue;
                 }
+                // If not comment, return the slash as a token
+                break;
             }
 
             // If whitespace, skip
@@ -103,33 +105,33 @@ impl TokenBuffer {
                     // Get lexeme and advance sentinels
                     match token {
                         Token::Identifier(_) => {
-                            return Ok(Token::Identifier(lexeme));
+                            return Ok(ParsedToken { token: Token::Identifier(lexeme), line: self.lines_read + 1 });
                         },
                         Token::Tint(_) => {
                             // Convert lexeme to integer and return as token
                             if let Ok(int) = lexeme.parse::<i32>() {
-                                return Ok(Token::Tint(int));
+                                return Ok(ParsedToken { token: Token::Tint(int), line: self.lines_read + 1 });
                             } else {
-                                return Err(LexicalError::InvalidTokens(vec![InvalidToken { lexeme, line: self.lines_read + 1 }]));
+                                return Err(LexicalError::InvalidToken(InvalidToken { lexeme, line: self.lines_read + 1 }));
                             }
                         },
                         Token::Tdouble(_) => {
                             // Convert lexeme to double and return as token
                             if let Ok(double) = lexeme.parse::<f64>() {
-                                return Ok(Token::Tdouble(double));
+                                return Ok(ParsedToken { token: Token::Tdouble(double), line: self.lines_read + 1 });
                             } else {
-                                return Err(LexicalError::InvalidTokens(vec![InvalidToken { lexeme, line: self.lines_read + 1 }]));
+                                return Err(LexicalError::InvalidToken(InvalidToken { lexeme, line: self.lines_read + 1 }));
                             }
                         },
                         _ => {
                             // Return token as is
-                            return Ok(token);
+                            return Ok(ParsedToken { token, line: self.lines_read + 1 });
                         },
                     }
                 },
                 None => {
                     // Invalid token
-                    return Err(LexicalError::InvalidTokens(vec![InvalidToken { lexeme, line: self.lines_read + 1 }]));
+                    return Err(LexicalError::InvalidToken(InvalidToken { lexeme, line: self.lines_read + 1 }));
                 }
             }
         } else {
@@ -140,7 +142,7 @@ impl TokenBuffer {
                 self.advance_sentinels();
             }
 
-            return Err(LexicalError::InvalidTokens(vec![InvalidToken { lexeme, line: self.lines_read + 1 }]));
+            return Err(LexicalError::InvalidToken(InvalidToken { lexeme, line: self.lines_read + 1 }));
         }
     }
 

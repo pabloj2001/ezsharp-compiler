@@ -1,5 +1,5 @@
 use crate::lexical_analysis::Token;
-use super::symbols::NonTerminal;
+use super::non_terminals::NonTerminal;
 
 pub enum FirstSetType {
     Terminal(Token),
@@ -295,15 +295,12 @@ pub fn get_constant_first_sets() -> Box<[FirstSet]> {
                 FirstSetType::Epsilon,
             ]),
         },
-        // <bfactor>: (, not, IDENTIFIER, T_INT, T_DOUBLE
+        // <bfactor>: (, not
         FirstSet {
             non_terminal: NonTerminal::Bfactor,
             first_set: Box::new([
                 FirstSetType::Terminal(Token::Soparen),
                 FirstSetType::Terminal(Token::Knot),
-                FirstSetType::Terminal(Token::Identifier(String::new())),
-                FirstSetType::Terminal(Token::Tint(0)),
-                FirstSetType::Terminal(Token::Tdouble(0.0)),
             ]),
         },
         // <bfactor2>: (, not, IDENTIFIER, T_INT, T_DOUBLE
@@ -312,6 +309,52 @@ pub fn get_constant_first_sets() -> Box<[FirstSet]> {
             first_set: Box::new([
                 FirstSetType::Terminal(Token::Soparen),
                 FirstSetType::Terminal(Token::Knot),
+                FirstSetType::Terminal(Token::Identifier(String::new())),
+                FirstSetType::Terminal(Token::Tint(0)),
+                FirstSetType::Terminal(Token::Tdouble(0.0)),
+            ]),
+        },
+        // <exprb>: IDENTIFIER, T_INT, T_DOUBLE
+        FirstSet {
+            non_terminal: NonTerminal::Exprb,
+            first_set: Box::new([
+                FirstSetType::Terminal(Token::Identifier(String::new())),
+                FirstSetType::Terminal(Token::Tint(0)),
+                FirstSetType::Terminal(Token::Tdouble(0.0)),
+            ]),
+        },
+        // <exprb2>: +, -, e
+        FirstSet {
+            non_terminal: NonTerminal::Exprb2,
+            first_set: Box::new([
+                FirstSetType::Terminal(Token::Oplus),
+                FirstSetType::Terminal(Token::Ominus),
+                FirstSetType::Epsilon,
+            ]),
+        },
+        // <termb>: IDENTIFIER, T_INT, T_DOUBLE
+        FirstSet {
+            non_terminal: NonTerminal::Termb,
+            first_set: Box::new([
+                FirstSetType::Terminal(Token::Identifier(String::new())),
+                FirstSetType::Terminal(Token::Tint(0)),
+                FirstSetType::Terminal(Token::Tdouble(0.0)),
+            ]),
+        },
+        // <termb2>: *, /, %, e
+        FirstSet {
+            non_terminal: NonTerminal::Termb2,
+            first_set: Box::new([
+                FirstSetType::Terminal(Token::Omultiply),
+                FirstSetType::Terminal(Token::Odivide),
+                FirstSetType::Terminal(Token::Omod),
+                FirstSetType::Epsilon,
+            ]),
+        },
+        // <factorb>: IDENTIFIER, T_INT, T_DOUBLE
+        FirstSet {
+            non_terminal: NonTerminal::Factorb,
+            first_set: Box::new([
                 FirstSetType::Terminal(Token::Identifier(String::new())),
                 FirstSetType::Terminal(Token::Tint(0)),
                 FirstSetType::Terminal(Token::Tdouble(0.0)),

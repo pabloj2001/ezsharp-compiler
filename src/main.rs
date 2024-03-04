@@ -2,9 +2,10 @@ mod lexical_analysis;
 mod syntax_analysis;
 mod logger;
 
-use std::env;
+use crate::logger::{FileLogAttributes, Loggable};
 
-use crate::logger::FileLogAttributes;
+use std::env;
+use lexical_analysis::ParsedToken;
 
 fn main() {
     let mut log_folder = String::from("logs");
@@ -31,7 +32,7 @@ fn main() {
 
     // Perform lexical analysis on the file
     let lexical_result = lexical_analysis::perform_lexical_analysis(filename);
-    let tokens: Vec<lexical_analysis::Token> = match lexical_result {
+    let tokens: Vec<ParsedToken> = match lexical_result {
         Ok(tokens) => {
             logger::log_to_file(
                 &tokens,
@@ -50,5 +51,14 @@ fn main() {
     };
 
     // Perform syntax analysis on the file
-    syntax_analysis::perform_syntax_analysis(tokens);
+    let syntax_result = syntax_analysis::perform_syntax_analysis(tokens);
+    match syntax_result {
+        Ok(_) => (),
+        Err(e) => {
+            println!("Syntax errors found. Check logs for more information.");
+            for error in e.iter() {
+                println!("{}", error.to_log_message());
+            }
+        }
+    }
 }

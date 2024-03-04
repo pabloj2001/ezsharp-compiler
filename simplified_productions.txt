@@ -53,8 +53,14 @@
 <bterm> ::= <bfactor> <bterm2>
 <bterm2> ::= and <bterm> | e
 
-<bfactor> ::= <bfactor2> | not <bfactor>
-<bfactor2> ::= <bexpr> | <expr> <comp> <expr>
+<bfactor> ::= (<bfactor2>) | not <bfactor>
+<bfactor2> ::= <bexpr> | <exprb> <comp> <exprb>
+
+<exprb> ::= <termb> <exprb2>
+<exprb2> ::= + <exprb> | - <exprb> | e
+<termb> ::= <factorb> <termb2>
+<termb2> ::= * <termb> | / <termb> | % <termb> | e
+<factorb> ::= <id><factor2> | <number>
 
 <comp> ::= LT | GT | EQUAL | LTE | GTE | NOT
 
@@ -64,3 +70,21 @@
 <id> ::= IDENTIFIER
 
 <number> ::= T_INT | T_DOUBLE
+
+/*
+((a + 2) * 2) == (2)
+
+while (i < 10)
+if (x + 3 == 2)
+if (x < 2)
+if ((x + 1) / 3 > 2)
+if ((x + (a + 1) * 3 > 2) and not (a < 1))
+
+<bfactor> ::= (<bfactor2> | not <bfactor>
+<bfactor2> ::= <bexpr>) | <factorb> <expr_term> <bfactor3>
+<bfactor3> ::= ) <expr_term> <comp_expr> | <comp_expr>)
+
+<factorb> ::= <id><factor2> | <number>
+<expr_term> ::= + <expr> | - <expr> | * <term> | / <term> | % <term> | e
+<comp_expr> ::= <comp> <expr>
+*/

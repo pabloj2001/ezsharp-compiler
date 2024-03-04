@@ -1,5 +1,5 @@
 use crate::lexical_analysis::Token;
-use super::symbols::NonTerminal;
+use super::non_terminals::NonTerminal;
 
 pub enum FollowSetType {
     Terminal(Token),
@@ -396,14 +396,84 @@ pub fn get_constant_follow_sets() -> Box<[FollowSet]> {
                 FollowSetType::Terminal(Token::Scparen),
             ]),
         },
-        // <bfactor2>: and, or, do, then, )
+        // <bfactor2>: )
         FollowSet {
             non_terminal: NonTerminal::Bfactor2,
             follow_set: Box::new([
-                FollowSetType::Terminal(Token::Kand),
-                FollowSetType::Terminal(Token::Kor),
-                FollowSetType::Terminal(Token::Kdo),
-                FollowSetType::Terminal(Token::Kthen),
+                FollowSetType::Terminal(Token::Scparen),
+            ]),
+        },
+        // <exprb>: LT, GT, EQUAL, LTE, GTE, NOT, )
+        FollowSet {
+            non_terminal: NonTerminal::Exprb,
+            follow_set: Box::new([
+                FollowSetType::Terminal(Token::Oequal),
+                FollowSetType::Terminal(Token::Olt),
+                FollowSetType::Terminal(Token::Ogt),
+                FollowSetType::Terminal(Token::Olte),
+                FollowSetType::Terminal(Token::Ogte),
+                FollowSetType::Terminal(Token::Onot),
+                FollowSetType::Terminal(Token::Scparen),
+            ]),
+        },
+        // <exprb2>: LT, GT, EQUAL, LTE, GTE, NOT, )
+        FollowSet {
+            non_terminal: NonTerminal::Exprb2,
+            follow_set: Box::new([
+                FollowSetType::Terminal(Token::Oequal),
+                FollowSetType::Terminal(Token::Olt),
+                FollowSetType::Terminal(Token::Ogt),
+                FollowSetType::Terminal(Token::Olte),
+                FollowSetType::Terminal(Token::Ogte),
+                FollowSetType::Terminal(Token::Onot),
+                FollowSetType::Terminal(Token::Scparen),
+            ]),
+        },
+        // <termb>: +, -, LT, GT, EQUAL, LTE, GTE, NOT, )
+        FollowSet {
+            non_terminal: NonTerminal::Termb,
+            follow_set: Box::new([
+                FollowSetType::Terminal(Token::Oplus),
+                FollowSetType::Terminal(Token::Ominus),
+                FollowSetType::Terminal(Token::Oequal),
+                FollowSetType::Terminal(Token::Olt),
+                FollowSetType::Terminal(Token::Ogt),
+                FollowSetType::Terminal(Token::Olte),
+                FollowSetType::Terminal(Token::Ogte),
+                FollowSetType::Terminal(Token::Onot),
+                FollowSetType::Terminal(Token::Scparen),
+            ]),
+        },
+        // <termb2>: +, -, LT, GT, EQUAL, LTE, GTE, NOT, )
+        FollowSet {
+            non_terminal: NonTerminal::Termb2,
+            follow_set: Box::new([
+                FollowSetType::Terminal(Token::Oplus),
+                FollowSetType::Terminal(Token::Ominus),
+                FollowSetType::Terminal(Token::Oequal),
+                FollowSetType::Terminal(Token::Olt),
+                FollowSetType::Terminal(Token::Ogt),
+                FollowSetType::Terminal(Token::Olte),
+                FollowSetType::Terminal(Token::Ogte),
+                FollowSetType::Terminal(Token::Onot),
+                FollowSetType::Terminal(Token::Scparen),
+            ]),
+        },
+        // <factorb>: *, /, %, +, -, LT, GT, EQUAL, LTE, GTE, NOT, )
+        FollowSet {
+            non_terminal: NonTerminal::Factorb,
+            follow_set: Box::new([
+                FollowSetType::Terminal(Token::Omultiply),
+                FollowSetType::Terminal(Token::Odivide),
+                FollowSetType::Terminal(Token::Omod),
+                FollowSetType::Terminal(Token::Oplus),
+                FollowSetType::Terminal(Token::Ominus),
+                FollowSetType::Terminal(Token::Oequal),
+                FollowSetType::Terminal(Token::Olt),
+                FollowSetType::Terminal(Token::Ogt),
+                FollowSetType::Terminal(Token::Olte),
+                FollowSetType::Terminal(Token::Ogte),
+                FollowSetType::Terminal(Token::Onot),
                 FollowSetType::Terminal(Token::Scparen),
             ]),
         },

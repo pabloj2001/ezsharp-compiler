@@ -1,12 +1,13 @@
 use crate::lexical_analysis::Token;
-use super::symbols::NonTerminal;
+use super::non_terminals::NonTerminal;
 
+#[derive(Debug, Clone)]
 pub enum ProductionType {
     NonTerminal(NonTerminal),
     Terminal(Token),
-    Epsilon,
 }
 
+#[derive(Clone)]
 pub struct Production {
     pub left: NonTerminal,
     pub right: Box<[ProductionType]>,
@@ -361,11 +362,13 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::Bterm),
             ].into_boxed_slice(),
         },
-        // <bfactor> ::= <bfactor2>
+        // <bfactor> ::= (<bfactor2>)
         Production {
             left: NonTerminal::Bfactor,
             right: vec![
+                ProductionType::Terminal(Token::Soparen),
                 ProductionType::NonTerminal(NonTerminal::Bfactor2),
+                ProductionType::Terminal(Token::Scparen),
             ].into_boxed_slice(),
         },
         // <bfactor> ::= not <bfactor>
@@ -383,13 +386,84 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::Bexpr),
             ].into_boxed_slice(),
         },
-        // <bfactor2> ::= <expr> <comp> <expr>
+        // <bfactor2> ::= <exprb> <comp> <exprb>
         Production {
             left: NonTerminal::Bfactor2,
             right: vec![
-                ProductionType::NonTerminal(NonTerminal::Expr),
+                ProductionType::NonTerminal(NonTerminal::Exprb),
                 ProductionType::NonTerminal(NonTerminal::Comp),
-                ProductionType::NonTerminal(NonTerminal::Expr),
+                ProductionType::NonTerminal(NonTerminal::Exprb),
+            ].into_boxed_slice(),
+        },
+        // <exprb> ::= <termb> <exprb2>
+        Production {
+            left: NonTerminal::Exprb,
+            right: vec![
+                ProductionType::NonTerminal(NonTerminal::Termb),
+                ProductionType::NonTerminal(NonTerminal::Exprb2),
+            ].into_boxed_slice(),
+        },
+        // <exprb2> ::= + <exprb>
+        Production {
+            left: NonTerminal::Exprb2,
+            right: vec![
+                ProductionType::Terminal(Token::Oplus),
+                ProductionType::NonTerminal(NonTerminal::Exprb),
+            ].into_boxed_slice(),
+        },
+        // <exprb2> ::= - <exprb>
+        Production {
+            left: NonTerminal::Exprb2,
+            right: vec![
+                ProductionType::Terminal(Token::Ominus),
+                ProductionType::NonTerminal(NonTerminal::Exprb),
+            ].into_boxed_slice(),
+        },
+        // <termb> ::= <factorb> <termb2>
+        Production {
+            left: NonTerminal::Termb,
+            right: vec![
+                ProductionType::NonTerminal(NonTerminal::Factorb),
+                ProductionType::NonTerminal(NonTerminal::Termb2),
+            ].into_boxed_slice(),
+        },
+        // <termb2> ::= * <termb>
+        Production {
+            left: NonTerminal::Termb2,
+            right: vec![
+                ProductionType::Terminal(Token::Omultiply),
+                ProductionType::NonTerminal(NonTerminal::Termb),
+            ].into_boxed_slice(),
+        },
+        // <termb2> ::= / <termb>
+        Production {
+            left: NonTerminal::Termb2,
+            right: vec![
+                ProductionType::Terminal(Token::Odivide),
+                ProductionType::NonTerminal(NonTerminal::Termb),
+            ].into_boxed_slice(),
+        },
+        // <termb2> ::= % <termb>
+        Production {
+            left: NonTerminal::Termb2,
+            right: vec![
+                ProductionType::Terminal(Token::Omod),
+                ProductionType::NonTerminal(NonTerminal::Termb),
+            ].into_boxed_slice(),
+        },
+        // <factorb> ::= <id><factor2>
+        Production {
+            left: NonTerminal::Factorb,
+            right: vec![
+                ProductionType::NonTerminal(NonTerminal::Id),
+                ProductionType::NonTerminal(NonTerminal::Factor2),
+            ].into_boxed_slice(),
+        },
+        // <factorb> ::= <number>
+        Production {
+            left: NonTerminal::Factorb,
+            right: vec![
+                ProductionType::NonTerminal(NonTerminal::Number),
             ].into_boxed_slice(),
         },
         // <comp> ::= LT

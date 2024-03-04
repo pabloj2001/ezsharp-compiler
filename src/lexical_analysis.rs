@@ -8,10 +8,10 @@ use std::fs::File;
 use std::io::Read;
 
 use transition_table::init_transition_table;
-pub use token::{Token, InvalidToken, LexicalError};
+pub use token::{Token, InvalidToken, LexicalError, ParsedToken};
 use token_buffer::TokenBuffer;
 
-pub fn perform_lexical_analysis(filename: &String) -> Result<Vec<Token>, LexicalError> {    
+pub fn perform_lexical_analysis(filename: &String) -> Result<Vec<ParsedToken>, LexicalError> {    
     // Initialize state table
     let state_table = init_transition_table();
 
@@ -32,7 +32,7 @@ pub fn perform_lexical_analysis(filename: &String) -> Result<Vec<Token>, Lexical
         return Err(LexicalError::EmptyFile);
     }
 
-    let mut tokens: Vec<Token> = Vec::new();
+    let mut tokens: Vec<ParsedToken> = Vec::new();
     let mut invalid_tokens: Vec<InvalidToken> = Vec::new();
 
     let mut prev_buffer = 1;
@@ -67,6 +67,10 @@ pub fn perform_lexical_analysis(filename: &String) -> Result<Vec<Token>, Lexical
 
     if !invalid_tokens.is_empty() {
         return Err(LexicalError::InvalidTokens(invalid_tokens));
-    }    
+    }
+
+    if tokens.is_empty() {
+        return Err(LexicalError::NoValidTokens);
+    }
     Ok(tokens)
 }
