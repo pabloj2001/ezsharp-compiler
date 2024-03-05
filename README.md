@@ -101,7 +101,13 @@ Global {
 ## Future Improvements
 - Syntax Analysis
     - Automate First and Follow sets generation
+    - Give better error messages (using empty cells in LL(1) table)
     - Clean up symbol table creation
+    - Add support for parantheses in boolean expressions
+    - Add support for negated expressions (grammar change)
 
 ## Additional Notes
 - The Productions for this grammar and the First and Follow sets were generated manually and can be found in the `simplified_productions.txt` and `first_follow_set.txt` files respectively.
+- The LL(1) table is generated automatically using the First and Follow sets, but a copy of what it looks like can be found in the `LL1_table.csv` file.
+    - The production indices are the same as the indices for the productions found in the `syntax_analysis/productions.rs` file.
+    - Production index 66 is outside of the array bounds as it represents all productions that go to epsilon.
