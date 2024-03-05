@@ -2,7 +2,7 @@ mod lexical_analysis;
 mod syntax_analysis;
 mod logger;
 
-use crate::logger::{FileLogAttributes, Loggable};
+use crate::logger::FileLogAttributes;
 
 use std::env;
 use lexical_analysis::ParsedToken;
@@ -39,6 +39,7 @@ fn main() {
                 &FileLogAttributes::new((log_folder.clone() + "/tokens.log").to_string(), false),
             ).unwrap();
             logger::clear_log_file((log_folder.clone() + "/lexical_errors.log").to_string()).unwrap();
+            println!("Lexical analysis completed successfully");
             tokens
         },
         Err(e) => {
@@ -46,6 +47,7 @@ fn main() {
                 &e,
                 &FileLogAttributes::new((log_folder.clone() + "/lexical_errors.log").to_string(), false),
             ).unwrap();
+            logger::clear_log_file((log_folder.clone() + "/tokens.log").to_string()).unwrap();
             panic!("Lexical errors found. Check logs for more information.");
         },
     };
@@ -53,12 +55,21 @@ fn main() {
     // Perform syntax analysis on the file
     let syntax_result = syntax_analysis::perform_syntax_analysis(tokens);
     match syntax_result {
-        Ok(_) => (),
+        Ok(table) => {
+            logger::log_to_file(
+                &table,
+                &FileLogAttributes::new((log_folder.clone() + "/symbol_table.log").to_string(), false),
+            ).unwrap();
+            logger::clear_log_file((log_folder.clone() + "/syntax_errors.log").to_string()).unwrap();
+            println!("Syntax analysis completed successfully");
+        },
         Err(e) => {
+            logger::log_to_file(
+                &e,
+                &FileLogAttributes::new((log_folder.clone() + "/syntax_errors.log").to_string(), false),
+            ).unwrap();
+            logger::clear_log_file((log_folder.clone() + "/symbol_table.log").to_string()).unwrap();
             println!("Syntax errors found. Check logs for more information.");
-            for error in e.iter() {
-                println!("{}", error.to_log_message());
-            }
         }
     }
 }

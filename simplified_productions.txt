@@ -70,21 +70,3 @@
 <id> ::= IDENTIFIER
 
 <number> ::= T_INT | T_DOUBLE
-
-/*
-((a + 2) * 2) == (2)
-
-while (i < 10)
-if (x + 3 == 2)
-if (x < 2)
-if ((x + 1) / 3 > 2)
-if ((x + (a + 1) * 3 > 2) and not (a < 1))
-
-<bfactor> ::= (<bfactor2> | not <bfactor>
-<bfactor2> ::= <bexpr>) | <factorb> <expr_term> <bfactor3>
-<bfactor3> ::= ) <expr_term> <comp_expr> | <comp_expr>)
-
-<factorb> ::= <id><factor2> | <number>
-<expr_term> ::= + <expr> | - <expr> | * <term> | / <term> | % <term> | e
-<comp_expr> ::= <comp> <expr>
-*/

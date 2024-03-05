@@ -6,15 +6,6 @@ pub enum FollowSetType {
     EndOfInput,
 }
 
-impl FollowSetType {
-    pub fn to_index(&self) -> usize {
-        match self {
-            FollowSetType::Terminal(token) => token.to_index(),
-            FollowSetType::EndOfInput => 38,
-        }
-    }
-}
-
 pub struct FollowSet {
     pub non_terminal: NonTerminal,
     pub follow_set: Box<[FollowSetType]>,
