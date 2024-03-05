@@ -1,4 +1,4 @@
-IDENTIFIER, T_INT, T_DOUBLE, if, then, else, fi, while, do, od, def, fed, return, and, or, not, int, double, print, +, -, *, /, %, =, EQUAL, LT, LTE, GT, GTE, NOT, COMMA, ;, ., (, ), [, ]	
+IDENTIFIER, T_INT, T_DOUBLE, if, then, else, fi, while, do, od, def, fed, return, and, or, not, int, double, print, +, -, *, /, %, =, EQUAL, LT, LTE, GT, GTE, NOT, COMMA, ;, ., (, ), [, ], $
 Program, 0, _, _, 0, _, _, _, 0, _, _, 0, _, 0, _, _, _, 0, 0, 0, _, _, _, _, _, _, _, _, _, _, _, _, _, 0, 0, _, _, _, _, _, _
 Fdecls, 66, _, _, 66, _, _, _, 66, _, _, 1, _, 66, _, _, _, 66, 66, 66, _, _, _, _, _, _, _, _, _, _, _, _, _, 66, 66, _, _, _, _, _, _
 Fdec, _, _, _, _, _, _, _, _, _, _, 2, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _
