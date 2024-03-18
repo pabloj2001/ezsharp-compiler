@@ -1,0 +1,20 @@
+#[derive(Debug, Clone)]
+pub enum SemanticAction {
+    AddFunc,
+    NewScope,
+    PopScope,
+    AddParam,
+    SetType,
+    AddVarDecl,
+    StartTypeTree,
+    CheckVarType,
+    CheckType,
+    SplitTree,
+    SetLiteral,
+    SetCurrFunc,
+    PopCurrFunc,
+    CheckParamType,
+    CheckIndexType,
+    SetIsArray,
+    SetId,
+}

@@ -1,10 +1,12 @@
 use crate::lexical_analysis::Token;
 use super::non_terminals::NonTerminal;
+use crate::semantic_analysis::actions::SemanticAction;
 
 #[derive(Debug, Clone)]
 pub enum ProductionType {
     NonTerminal(NonTerminal),
     Terminal(Token),
+    Action(SemanticAction),
 }
 
 #[derive(Clone)]
@@ -33,25 +35,29 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::Fdecls),
             ].into_boxed_slice(),
         },
-        // <fdec> ::= def <type> <fname> ( <params> ) <declarations_seq> fed
+        // <fdec> ::= def <type> <fname> [ADD_FUNC] ( <params> ) [NEW_SCOPE] <declarations_seq> fed [POP_SCOPE]
         Production {
             left: NonTerminal::Fdec,
             right: vec![
                 ProductionType::Terminal(Token::Kdef),
                 ProductionType::NonTerminal(NonTerminal::Type),
                 ProductionType::NonTerminal(NonTerminal::Fname),
+                ProductionType::Action(SemanticAction::AddFunc),
                 ProductionType::Terminal(Token::Soparen),
                 ProductionType::NonTerminal(NonTerminal::Params),
                 ProductionType::Terminal(Token::Scparen),
+                ProductionType::Action(SemanticAction::NewScope),
                 ProductionType::NonTerminal(NonTerminal::DeclarationsSeq),
                 ProductionType::Terminal(Token::Kfed),
+                ProductionType::Action(SemanticAction::PopScope),
             ].into_boxed_slice(),
         },
-        // <params> ::= <type_var><params2>
+        // <params> ::= <type_var> [ADD_PARAM] <params2>
         Production {
             left: NonTerminal::Params,
             right: vec![
                 ProductionType::NonTerminal(NonTerminal::TypeVar),
+                ProductionType::Action(SemanticAction::AddParam),
                 ProductionType::NonTerminal(NonTerminal::Params2),
             ].into_boxed_slice(),
         },
@@ -103,25 +109,28 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::VarList),
             ].into_boxed_slice(),
         },
-        // <type> := int
+        // <type> := int [SET_TYPE]
         Production {
             left: NonTerminal::Type,
             right: vec![
                 ProductionType::Terminal(Token::Kint),
+                ProductionType::Action(SemanticAction::SetType),
             ].into_boxed_slice(),
         },
-        // <type> := double
+        // <type> := double [SET_TYPE]
         Production {
             left: NonTerminal::Type,
             right: vec![
                 ProductionType::Terminal(Token::Kdouble),
+                ProductionType::Action(SemanticAction::SetType),
             ].into_boxed_slice(),
         },
-        // <varlist> ::= <var><varlist2>
+        // <varlist> ::= <var> [ADD_VAR_DECL] <varlist2>
         Production {
             left: NonTerminal::VarList,
             right: vec![
                 ProductionType::NonTerminal(NonTerminal::Var),
+                ProductionType::Action(SemanticAction::AddVarDecl),
                 ProductionType::NonTerminal(NonTerminal::VarList2),
             ].into_boxed_slice(),
         },
@@ -149,13 +158,15 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::StatementSeq),
             ].into_boxed_slice(),
         },
-        // <statement> ::= <var> = <expr>
+        // <statement> ::= <var> = [START_TYPE_TREE] <expr> [CHECK_VAR_TYPE]
         Production {
             left: NonTerminal::Statement,
             right: vec![
                 ProductionType::NonTerminal(NonTerminal::Var),
                 ProductionType::Terminal(Token::Oassign),
+                ProductionType::Action(SemanticAction::StartTypeTree),
                 ProductionType::NonTerminal(NonTerminal::Expr),
+                ProductionType::Action(SemanticAction::CheckVarType),
             ].into_boxed_slice(),
         },
         // <statement> ::= <if>
@@ -165,30 +176,33 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::If),
             ].into_boxed_slice(),
         },
-        // <statement> ::= while <bexpr> do <statement_seq> od
+        // <statement> ::= while [START_TYPE_TREE] <bexpr> do <statement_seq> od
         Production {
             left: NonTerminal::Statement,
             right: vec![
                 ProductionType::Terminal(Token::Kwhile),
+                ProductionType::Action(SemanticAction::StartTypeTree),
                 ProductionType::NonTerminal(NonTerminal::Bexpr),
                 ProductionType::Terminal(Token::Kdo),
                 ProductionType::NonTerminal(NonTerminal::StatementSeq),
                 ProductionType::Terminal(Token::Kod),
             ].into_boxed_slice(),
         },
-        // <statement> ::= <built_in> <expr>
+        // <statement> ::= <built_in> [START_TYPE_TREE] <expr>
         Production {
             left: NonTerminal::Statement,
             right: vec![
                 ProductionType::NonTerminal(NonTerminal::BuiltIn),
+                ProductionType::Action(SemanticAction::StartTypeTree),
                 ProductionType::NonTerminal(NonTerminal::Expr),
             ].into_boxed_slice(),
         },
-        // <if> ::= if <bexpr> then <statement_seq> <else> fi
+        // <if> ::= if [START_TYPE_TREE] <bexpr> then <statement_seq> <else> fi
         Production {
             left: NonTerminal::If,
             right: vec![
                 ProductionType::Terminal(Token::Kif),
+                ProductionType::Action(SemanticAction::StartTypeTree),
                 ProductionType::NonTerminal(NonTerminal::Bexpr),
                 ProductionType::Terminal(Token::Kthen),
                 ProductionType::NonTerminal(NonTerminal::StatementSeq),

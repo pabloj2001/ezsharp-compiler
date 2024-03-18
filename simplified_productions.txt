@@ -2,9 +2,9 @@
 
 <fdecls> ::= <fdec>; <fdecls> | e
 
-<fdec> ::= def <type> <fname> ( <params> ) <declarations_seq> fed
+<fdec> ::= def <type> <fname> [ADD_FUNC] ( <params> ) [NEW_SCOPE] <declarations_seq> fed [POP_SCOPE]
 
-<params> ::= <type_var><params2> | e
+<params> ::= <type_var> [ADD_PARAM] <params2> | e
 <params2> ::= , <params> | e
 <type_var> ::= <type> <var>
 
@@ -16,41 +16,41 @@
 
 <decl> := <type> <varlist>
 
-<type> := int | double
+<type> := int [SET_TYPE] | double [SET_TYPE]
 
-<varlist> ::= <var><varlist2>
+<varlist> ::= <var> [ADD_VAR_DECL] <varlist2>
 <varlist2> ::= , <varlist> | e
 
 <statement_seq> ::= <statement><statement_seq2>
 <statement_seq2> ::= ; <statement_seq> | e
 
 <statement> ::=
-		<var> = <expr> |
+		<var> = [START_TYPE_TREE] <expr> [CHECK_VAR_TYPE] |
         <if> |
-        while <bexpr> do <statement_seq> od |
-        <built_in> <expr> | e
+        while [START_TYPE_TREE] <bexpr> do <statement_seq> od |
+        <built_in> [START_TYPE_TREE] <expr> | e
 
-<if> ::= if <bexpr> then <statement_seq> <else> fi
+<if> ::= if [START_TYPE_TREE] <bexpr> then <statement_seq> <else> fi
 <else> ::= else <statement_seq> | e
 
 <built_in> ::= print | return
 
-<expr> ::= <term> <expr2>
-<expr2> ::= + <expr> | - <expr> | e
+<expr> ::= <term> <expr2> [CHECK_TYPE]
+<expr2> ::= + [SPLIT_TREE] <expr> | - [SPLIT_TREE] <expr> | e
 
-<term> ::= <factor> <term2>
-<term2> ::= * <term> | / <term> | % <term> | e
+<term> ::= <factor> <term2> [CHECK_TYPE]
+<term2> ::= * [SPLIT_TREE] <term> | / [SPLIT_TREE] <term> | % [SPLIT_TREE] <term> | e
 
-<factor> ::= <id><factor2> | <number> | (<expr>)
-<factor2> ::= <var2> | (<exprseq>)
+<factor> ::= <id><factor2> | <number> [SET_LITERAL] | ( [SPLIT_TREE] <expr> )
+<factor2> ::= <var2> | [SET_CURR_FUNC] (<exprseq>) [POP_CURR_FUNC]
 
-<exprseq> ::= <expr><exprseq2> | e
+<exprseq> ::= [START_TYPE_TREE] <expr> [CHECK_PARAM_TYPE] <exprseq2> | e
 <exprseq2> ::= , <exprseq> | e
 
-<bexpr> ::= <bterm> <bexpr2>
+<bexpr> ::= <bterm> <bexpr2> [CHECK_TYPE]
 <bexpr2> ::= or <bexpr> | e
 
-<bterm> ::= <bfactor> <bterm2>
+<bterm> ::= <bfactor> <bterm2> [CHECK_TYPE]
 <bterm2> ::= and <bterm> | e
 
 <bfactor> ::= (<bfactor2>) | not <bfactor>
@@ -65,8 +65,8 @@
 <comp> ::= LT | GT | EQUAL | LTE | GTE | NOT
 
 <var> ::= <id><var2>
-<var2> ::= [<expr>] | e
+<var2> ::= OPEN_SQR_BRACKET [START_TYPE_TREE] <expr> [CHECK_INDEX_TYPE] CLOSING_SQR_BRACKET [SET_IS_ARRAY] | e
 
-<id> ::= IDENTIFIER
+<id> ::= IDENTIFIER [SET_ID]
 
 <number> ::= T_INT | T_DOUBLE

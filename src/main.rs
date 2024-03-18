@@ -1,5 +1,6 @@
 mod lexical_analysis;
 mod syntax_analysis;
+mod semantic_analysis;
 mod logger;
 
 use crate::logger::FileLogAttributes;
