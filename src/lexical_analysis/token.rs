@@ -93,15 +93,7 @@ impl Token {
             (x, y) => x == y,
         }
     }
-}
 
-impl Loggable for Token {
-    fn to_log_message(&self) -> String {
-        format!("{:?}", self)
-    }
-}
-
-impl Token {
     pub fn to_index(&self) -> usize {
         match self {
             Token::Identifier(_) => 0,
@@ -143,6 +135,12 @@ impl Token {
             Token::Sobracket => 36,
             Token::Scbracket => 37,
         }
+    }
+}
+
+impl Loggable for Token {
+    fn to_log_message(&self) -> String {
+        format!("{:?}", self)
     }
 }
 

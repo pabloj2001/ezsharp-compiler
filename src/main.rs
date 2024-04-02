@@ -1,6 +1,5 @@
 mod lexical_analysis;
-mod syntax_analysis;
-mod semantic_analysis;
+mod syntax_semantic_analysis;
 mod logger;
 
 use crate::logger::FileLogAttributes;
@@ -54,7 +53,7 @@ fn main() {
     };
 
     // Perform syntax analysis on the file
-    let syntax_result = syntax_analysis::perform_syntax_analysis(tokens);
+    let syntax_result = syntax_semantic_analysis::perform_syntax_semantic_analysis(tokens);
     match syntax_result {
         Ok(table) => {
             logger::log_to_file(
@@ -62,15 +61,24 @@ fn main() {
                 &FileLogAttributes::new((log_folder.clone() + "/symbol_table.log").to_string(), false),
             ).unwrap();
             logger::clear_log_file((log_folder.clone() + "/syntax_errors.log").to_string()).unwrap();
-            println!("Syntax analysis completed successfully");
+            logger::clear_log_file((log_folder.clone() + "/semantic_errors.log").to_string()).unwrap();
+            println!("Syntax and Semantic analysis completed successfully");
         },
         Err(e) => {
-            logger::log_to_file(
-                &e,
-                &FileLogAttributes::new((log_folder.clone() + "/syntax_errors.log").to_string(), false),
-            ).unwrap();
+            if !e.syntax_errors.is_empty() {
+                logger::log_to_file(
+                    &e.syntax_errors.into_boxed_slice(),
+                    &FileLogAttributes::new((log_folder.clone() + "/syntax_errors.log").to_string(), false),
+                ).unwrap();
+                println!("Syntax errors found. Check logs for more information.");
+            } else if !e.semantic_errors.is_empty() {
+                logger::log_to_file(
+                    &e.semantic_errors.into_boxed_slice(),
+                    &FileLogAttributes::new((log_folder.clone() + "/semantic_errors.log").to_string(), false),
+                ).unwrap();
+                println!("Semantic errors found. Check logs for more information.");
+            }
             logger::clear_log_file((log_folder.clone() + "/symbol_table.log").to_string()).unwrap();
-            println!("Syntax errors found. Check logs for more information.");
         }
     }
 }

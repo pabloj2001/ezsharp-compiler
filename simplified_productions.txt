@@ -2,7 +2,7 @@
 
 <fdecls> ::= <fdec>; <fdecls> | e
 
-<fdec> ::= def <type> <fname> [ADD_FUNC] ( <params> ) [NEW_SCOPE] <declarations_seq> fed [POP_SCOPE]
+<fdec> ::= def <type> <fname> [SET_FUNC] ( <params> ) [ADD_FUNC_DECL] <declarations_seq> fed [POP_SCOPE]
 
 <params> ::= <type_var> [ADD_PARAM] <params2> | e
 <params2> ::= , <params> | e
@@ -14,7 +14,7 @@
 
 <declarations_seq> ::= <declarations> <statement_seq>
 
-<decl> := <type> <varlist>
+<decl> := <type> <varlist> [CLEAR_VAR_DECL]
 
 <type> := int [SET_TYPE] | double [SET_TYPE]
 
@@ -25,47 +25,42 @@
 <statement_seq2> ::= ; <statement_seq> | e
 
 <statement> ::=
-		<var> = [START_TYPE_TREE] <expr> [CHECK_VAR_TYPE] |
+		<var> = [START_TYPE_TREE] <bexpr> [CHECK_VAR_TYPE] [ADD_TYPE_TREE] |
         <if> |
-        while [START_TYPE_TREE] <bexpr> do <statement_seq> od |
-        <built_in> [START_TYPE_TREE] <expr> | e
+        while [START_TYPE_TREE] <bexpr> [ADD_TYPE_TREE] do <statement_seq> od |
+        <built_in> [START_TYPE_TREE] <bexpr> [ADD_TYPE_TREE] | e
 
-<if> ::= if [START_TYPE_TREE] <bexpr> then <statement_seq> <else> fi
+<if> ::= if [START_TYPE_TREE] <bexpr> [ADD_TYPE_TREE] then <statement_seq> <else> fi
 <else> ::= else <statement_seq> | e
 
-<built_in> ::= print | return
+<built_in> ::= print | return [CHECK_RETURN_TYPE]
 
-<expr> ::= <term> <expr2> [CHECK_TYPE]
-<expr2> ::= + [SPLIT_TREE] <expr> | - [SPLIT_TREE] <expr> | e
+<bexpr> ::= <bterm> <bexpr2>
+<bexpr2> ::= or [SPLIT_TREE] <bexpr> [CHECK_TYPE] | e
 
-<term> ::= <factor> <term2> [CHECK_TYPE]
-<term2> ::= * [SPLIT_TREE] <term> | / [SPLIT_TREE] <term> | % [SPLIT_TREE] <term> | e
+<bterm> ::= <bfactor> <bterm2>
+<bterm2> ::= and [SPLIT_TREE] <bterm> [CHECK_TYPE] | e
 
-<factor> ::= <id><factor2> | <number> [SET_LITERAL] | ( [SPLIT_TREE] <expr> )
-<factor2> ::= <var2> | [SET_CURR_FUNC] (<exprseq>) [POP_CURR_FUNC]
+<bfactor> ::= <expr> <bfactor2> | not [ADD_OPERATOR] <bfactor> [CHECK_TYPE]
+<bfactor2> ::= <comp> [SPLIT_TREE] <expr> [CHECK_TYPE] | e
 
-<exprseq> ::= [START_TYPE_TREE] <expr> [CHECK_PARAM_TYPE] <exprseq2> | e
+<expr> ::= <term> <expr2>
+<expr2> ::= + [SPLIT_TREE] <expr> [CHECK_TYPE] | - [SPLIT_TREE] <expr> [CHECK_TYPE] | e
+
+<term> ::= <neg_factor> <term2>
+<term2> ::= * [SPLIT_TREE] <term> [CHECK_TYPE] | / [SPLIT_TREE] <term> [CHECK_TYPE] | % [SPLIT_TREE] <term> [CHECK_TYPE] | e
+
+<neg_factor> ::= - [ADD_OPERATOR] <factor> [CHECK_TYPE] | <factor>
+<factor> ::= <id><factor2> | <number> [SET_LITERAL] | ( [ADD_OPERATOR] <bexpr> ) [CHECK_TYPE]
+<factor2> ::= <var2> | [ADD_FUNC_CHECK] (<exprseq>) [POP_FUNC_CHECK]
+
+<exprseq> ::= [START_TYPE_TREE] <bexpr> [CHECK_PARAM_TYPE] [ADD_TYPE_TREE] <exprseq2> | e
 <exprseq2> ::= , <exprseq> | e
-
-<bexpr> ::= <bterm> <bexpr2> [CHECK_TYPE]
-<bexpr2> ::= or <bexpr> | e
-
-<bterm> ::= <bfactor> <bterm2> [CHECK_TYPE]
-<bterm2> ::= and <bterm> | e
-
-<bfactor> ::= (<bfactor2>) | not <bfactor>
-<bfactor2> ::= <bexpr> | <exprb> <comp> <exprb>
-
-<exprb> ::= <termb> <exprb2>
-<exprb2> ::= + <exprb> | - <exprb> | e
-<termb> ::= <factorb> <termb2>
-<termb2> ::= * <termb> | / <termb> | % <termb> | e
-<factorb> ::= <id><factor2> | <number>
 
 <comp> ::= LT | GT | EQUAL | LTE | GTE | NOT
 
 <var> ::= <id><var2>
-<var2> ::= OPEN_SQR_BRACKET [START_TYPE_TREE] <expr> [CHECK_INDEX_TYPE] CLOSING_SQR_BRACKET [SET_IS_ARRAY] | e
+<var2> ::= OPEN_SQR_BRACKET [START_TYPE_TREE] <bexpr> [CHECK_INDEX_TYPE] [ADD_TYPE_TREE] CLOSING_SQR_BRACKET [SET_IS_ARRAY] | e
 
 <id> ::= IDENTIFIER [SET_ID]
 

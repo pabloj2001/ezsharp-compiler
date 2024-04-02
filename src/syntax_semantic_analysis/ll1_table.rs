@@ -55,6 +55,9 @@ pub fn generate_ll1_table(productions: &Box<[Production]>, follow_sets: &Box<[Fo
                                     set_table_entry(&mut table, non_terminal, token.to_index(), i);
                                     break;
                                 }
+                            } else {
+                                // ProductionType::Action
+                                continue;
                             }
 
                             if !prod_elem_contains_epsilon {

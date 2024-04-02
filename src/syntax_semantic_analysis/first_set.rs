@@ -186,7 +186,72 @@ pub fn get_constant_first_sets() -> Box<[FirstSet]> {
                 FirstSetType::Terminal(Token::Kreturn),
             ]),
         },
-        // <expr>: IDENTIFIER, T_INT, T_DOUBLE, (
+        // <bexpr>: -, IDENTIFIER, T_INT, T_DOUBLE, (, not
+        FirstSet {
+            non_terminal: NonTerminal::Bexpr,
+            first_set: Box::new([
+                FirstSetType::Terminal(Token::Identifier(String::new())),
+                FirstSetType::Terminal(Token::Tint(0)),
+                FirstSetType::Terminal(Token::Tdouble(0.0)),
+                FirstSetType::Terminal(Token::Soparen),
+                FirstSetType::Terminal(Token::Knot),
+                FirstSetType::Terminal(Token::Ominus),
+            ]),
+        },
+        // <bexpr2>: or, e
+        FirstSet {
+            non_terminal: NonTerminal::Bexpr2,
+            first_set: Box::new([
+                FirstSetType::Terminal(Token::Kor),
+                FirstSetType::Epsilon,
+            ]),
+        },
+        // <bterm>: -, IDENTIFIER, T_INT, T_DOUBLE, (, not
+        FirstSet {
+            non_terminal: NonTerminal::Bterm,
+            first_set: Box::new([
+                FirstSetType::Terminal(Token::Identifier(String::new())),
+                FirstSetType::Terminal(Token::Tint(0)),
+                FirstSetType::Terminal(Token::Tdouble(0.0)),
+                FirstSetType::Terminal(Token::Soparen),
+                FirstSetType::Terminal(Token::Knot),
+                FirstSetType::Terminal(Token::Ominus),
+            ]),
+        },
+        // <bterm2>: and, e
+        FirstSet {
+            non_terminal: NonTerminal::Bterm2,
+            first_set: Box::new([
+                FirstSetType::Terminal(Token::Kand),
+                FirstSetType::Epsilon,
+            ]),
+        },
+        // <bfactor>: -, IDENTIFIER, T_INT, T_DOUBLE, (, not
+        FirstSet {
+            non_terminal: NonTerminal::Bfactor,
+            first_set: Box::new([
+                FirstSetType::Terminal(Token::Identifier(String::new())),
+                FirstSetType::Terminal(Token::Tint(0)),
+                FirstSetType::Terminal(Token::Tdouble(0.0)),
+                FirstSetType::Terminal(Token::Soparen),
+                FirstSetType::Terminal(Token::Knot),
+                FirstSetType::Terminal(Token::Ominus),
+            ]),
+        },
+        // <bfactor2>: LT, GT, EQUAL, LTE, GTE, NOT, e
+        FirstSet {
+            non_terminal: NonTerminal::Bfactor2,
+            first_set: Box::new([
+                FirstSetType::Terminal(Token::Oequal),
+                FirstSetType::Terminal(Token::Olt),
+                FirstSetType::Terminal(Token::Ogt),
+                FirstSetType::Terminal(Token::Olte),
+                FirstSetType::Terminal(Token::Ogte),
+                FirstSetType::Terminal(Token::Onot),
+                FirstSetType::Epsilon,
+            ]),
+        },
+        // <expr>: -, IDENTIFIER, T_INT, T_DOUBLE, (
         FirstSet {
             non_terminal: NonTerminal::Expr,
             first_set: Box::new([
@@ -194,6 +259,7 @@ pub fn get_constant_first_sets() -> Box<[FirstSet]> {
                 FirstSetType::Terminal(Token::Tint(0)),
                 FirstSetType::Terminal(Token::Tdouble(0.0)),
                 FirstSetType::Terminal(Token::Soparen),
+                FirstSetType::Terminal(Token::Ominus),
             ]),
         },
         // <expr2>: +, -, e
@@ -205,7 +271,7 @@ pub fn get_constant_first_sets() -> Box<[FirstSet]> {
                 FirstSetType::Epsilon,
             ]),
         },
-        // <term>: IDENTIFIER, T_INT, T_DOUBLE, (
+        // <term>: -, IDENTIFIER, T_INT, T_DOUBLE, (
         FirstSet {
             non_terminal: NonTerminal::Term,
             first_set: Box::new([
@@ -213,6 +279,7 @@ pub fn get_constant_first_sets() -> Box<[FirstSet]> {
                 FirstSetType::Terminal(Token::Tint(0)),
                 FirstSetType::Terminal(Token::Tdouble(0.0)),
                 FirstSetType::Terminal(Token::Soparen),
+                FirstSetType::Terminal(Token::Ominus),
             ]),
         },
         // <term2>: *, /, %, e
@@ -223,6 +290,17 @@ pub fn get_constant_first_sets() -> Box<[FirstSet]> {
                 FirstSetType::Terminal(Token::Odivide),
                 FirstSetType::Terminal(Token::Omod),
                 FirstSetType::Epsilon,
+            ]),
+        },
+        // <neg_factor>: -, IDENTIFIER, T_INT, T_DOUBLE, (
+        FirstSet {
+            non_terminal: NonTerminal::NegFactor,
+            first_set: Box::new([
+                FirstSetType::Terminal(Token::Identifier(String::new())),
+                FirstSetType::Terminal(Token::Tint(0)),
+                FirstSetType::Terminal(Token::Tdouble(0.0)),
+                FirstSetType::Terminal(Token::Soparen),
+                FirstSetType::Terminal(Token::Ominus),
             ]),
         },
         // <factor>: IDENTIFIER, T_INT, T_DOUBLE, (
@@ -244,7 +322,7 @@ pub fn get_constant_first_sets() -> Box<[FirstSet]> {
                 FirstSetType::Epsilon,
             ]),
         },
-        // <exprseq>: IDENTIFIER, T_INT, T_DOUBLE, (, e
+        // <exprseq>: -, IDENTIFIER, T_INT, T_DOUBLE, (, not, e
         FirstSet {
             non_terminal: NonTerminal::ExprSeq,
             first_set: Box::new([
@@ -252,6 +330,8 @@ pub fn get_constant_first_sets() -> Box<[FirstSet]> {
                 FirstSetType::Terminal(Token::Tint(0)),
                 FirstSetType::Terminal(Token::Tdouble(0.0)),
                 FirstSetType::Terminal(Token::Soparen),
+                FirstSetType::Terminal(Token::Knot),
+                FirstSetType::Terminal(Token::Ominus),
                 FirstSetType::Epsilon,
             ]),
         },
@@ -261,103 +341,6 @@ pub fn get_constant_first_sets() -> Box<[FirstSet]> {
             first_set: Box::new([
                 FirstSetType::Terminal(Token::Scomma),
                 FirstSetType::Epsilon,
-            ]),
-        },
-        // <bexpr>: (, not
-        FirstSet {
-            non_terminal: NonTerminal::Bexpr,
-            first_set: Box::new([
-                FirstSetType::Terminal(Token::Soparen),
-                FirstSetType::Terminal(Token::Knot),
-            ]),
-        },
-        // <bexpr2>: or, e
-        FirstSet {
-            non_terminal: NonTerminal::Bexpr2,
-            first_set: Box::new([
-                FirstSetType::Terminal(Token::Kor),
-                FirstSetType::Epsilon,
-            ]),
-        },
-        // <bterm>: (, not
-        FirstSet {
-            non_terminal: NonTerminal::Bterm,
-            first_set: Box::new([
-                FirstSetType::Terminal(Token::Soparen),
-                FirstSetType::Terminal(Token::Knot),
-            ]),
-        },
-        // <bterm2>: and, e
-        FirstSet {
-            non_terminal: NonTerminal::Bterm2,
-            first_set: Box::new([
-                FirstSetType::Terminal(Token::Kand),
-                FirstSetType::Epsilon,
-            ]),
-        },
-        // <bfactor>: (, not
-        FirstSet {
-            non_terminal: NonTerminal::Bfactor,
-            first_set: Box::new([
-                FirstSetType::Terminal(Token::Soparen),
-                FirstSetType::Terminal(Token::Knot),
-            ]),
-        },
-        // <bfactor2>: (, not, IDENTIFIER, T_INT, T_DOUBLE
-        FirstSet {
-            non_terminal: NonTerminal::Bfactor2,
-            first_set: Box::new([
-                FirstSetType::Terminal(Token::Soparen),
-                FirstSetType::Terminal(Token::Knot),
-                FirstSetType::Terminal(Token::Identifier(String::new())),
-                FirstSetType::Terminal(Token::Tint(0)),
-                FirstSetType::Terminal(Token::Tdouble(0.0)),
-            ]),
-        },
-        // <exprb>: IDENTIFIER, T_INT, T_DOUBLE
-        FirstSet {
-            non_terminal: NonTerminal::Exprb,
-            first_set: Box::new([
-                FirstSetType::Terminal(Token::Identifier(String::new())),
-                FirstSetType::Terminal(Token::Tint(0)),
-                FirstSetType::Terminal(Token::Tdouble(0.0)),
-            ]),
-        },
-        // <exprb2>: +, -, e
-        FirstSet {
-            non_terminal: NonTerminal::Exprb2,
-            first_set: Box::new([
-                FirstSetType::Terminal(Token::Oplus),
-                FirstSetType::Terminal(Token::Ominus),
-                FirstSetType::Epsilon,
-            ]),
-        },
-        // <termb>: IDENTIFIER, T_INT, T_DOUBLE
-        FirstSet {
-            non_terminal: NonTerminal::Termb,
-            first_set: Box::new([
-                FirstSetType::Terminal(Token::Identifier(String::new())),
-                FirstSetType::Terminal(Token::Tint(0)),
-                FirstSetType::Terminal(Token::Tdouble(0.0)),
-            ]),
-        },
-        // <termb2>: *, /, %, e
-        FirstSet {
-            non_terminal: NonTerminal::Termb2,
-            first_set: Box::new([
-                FirstSetType::Terminal(Token::Omultiply),
-                FirstSetType::Terminal(Token::Odivide),
-                FirstSetType::Terminal(Token::Omod),
-                FirstSetType::Epsilon,
-            ]),
-        },
-        // <factorb>: IDENTIFIER, T_INT, T_DOUBLE
-        FirstSet {
-            non_terminal: NonTerminal::Factorb,
-            first_set: Box::new([
-                FirstSetType::Terminal(Token::Identifier(String::new())),
-                FirstSetType::Terminal(Token::Tint(0)),
-                FirstSetType::Terminal(Token::Tdouble(0.0)),
             ]),
         },
         // <comp>: LT, GT, EQUAL, LTE, GTE, NOT

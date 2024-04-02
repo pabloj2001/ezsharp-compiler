@@ -1,6 +1,6 @@
 use crate::lexical_analysis::Token;
 use super::non_terminals::NonTerminal;
-use crate::semantic_analysis::actions::SemanticAction;
+use super::semantic_analysis::SemanticAction;
 
 #[derive(Debug, Clone)]
 pub enum ProductionType {
@@ -35,18 +35,18 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::Fdecls),
             ].into_boxed_slice(),
         },
-        // <fdec> ::= def <type> <fname> [ADD_FUNC] ( <params> ) [NEW_SCOPE] <declarations_seq> fed [POP_SCOPE]
+        // <fdec> ::= def <type> <fname> [SET_FUNC] ( <params> ) [ADD_FUNC_DECL] <declarations_seq> fed [CHECK_RETURN_TYPE] [POP_SCOPE]
         Production {
             left: NonTerminal::Fdec,
             right: vec![
                 ProductionType::Terminal(Token::Kdef),
                 ProductionType::NonTerminal(NonTerminal::Type),
                 ProductionType::NonTerminal(NonTerminal::Fname),
-                ProductionType::Action(SemanticAction::AddFunc),
+                ProductionType::Action(SemanticAction::SetFunc),
                 ProductionType::Terminal(Token::Soparen),
                 ProductionType::NonTerminal(NonTerminal::Params),
                 ProductionType::Terminal(Token::Scparen),
-                ProductionType::Action(SemanticAction::NewScope),
+                ProductionType::Action(SemanticAction::AddFuncDecl),
                 ProductionType::NonTerminal(NonTerminal::DeclarationsSeq),
                 ProductionType::Terminal(Token::Kfed),
                 ProductionType::Action(SemanticAction::PopScope),
@@ -101,12 +101,13 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::StatementSeq),
             ].into_boxed_slice(),
         },
-        // <decl> := <type> <varlist>
+        // <decl> := <type> <varlist> [CLEAR_VAR_DECL]
         Production {
             left: NonTerminal::Decl,
             right: vec![
                 ProductionType::NonTerminal(NonTerminal::Type),
                 ProductionType::NonTerminal(NonTerminal::VarList),
+                ProductionType::Action(SemanticAction::ClearVarDecl),
             ].into_boxed_slice(),
         },
         // <type> := int [SET_TYPE]
@@ -158,15 +159,16 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::StatementSeq),
             ].into_boxed_slice(),
         },
-        // <statement> ::= <var> = [START_TYPE_TREE] <expr> [CHECK_VAR_TYPE]
+        // <statement> ::= <var> = [START_TYPE_TREE] <bexpr> [CHECK_VAR_TYPE] [ADD_TYPE_TREE]
         Production {
             left: NonTerminal::Statement,
             right: vec![
                 ProductionType::NonTerminal(NonTerminal::Var),
                 ProductionType::Terminal(Token::Oassign),
                 ProductionType::Action(SemanticAction::StartTypeTree),
-                ProductionType::NonTerminal(NonTerminal::Expr),
+                ProductionType::NonTerminal(NonTerminal::Bexpr),
                 ProductionType::Action(SemanticAction::CheckVarType),
+                ProductionType::Action(SemanticAction::AddTypeTree),
             ].into_boxed_slice(),
         },
         // <statement> ::= <if>
@@ -176,34 +178,37 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::If),
             ].into_boxed_slice(),
         },
-        // <statement> ::= while [START_TYPE_TREE] <bexpr> do <statement_seq> od
+        // <statement> ::= while [START_TYPE_TREE] <bexpr> [ADD_TYPE_TREE] do <statement_seq> od
         Production {
             left: NonTerminal::Statement,
             right: vec![
                 ProductionType::Terminal(Token::Kwhile),
                 ProductionType::Action(SemanticAction::StartTypeTree),
                 ProductionType::NonTerminal(NonTerminal::Bexpr),
+                ProductionType::Action(SemanticAction::AddTypeTree),
                 ProductionType::Terminal(Token::Kdo),
                 ProductionType::NonTerminal(NonTerminal::StatementSeq),
                 ProductionType::Terminal(Token::Kod),
             ].into_boxed_slice(),
         },
-        // <statement> ::= <built_in> [START_TYPE_TREE] <expr>
+        // <statement> ::= <built_in> [START_TYPE_TREE] <bexpr>  [ADD_TYPE_TREE]
         Production {
             left: NonTerminal::Statement,
             right: vec![
                 ProductionType::NonTerminal(NonTerminal::BuiltIn),
                 ProductionType::Action(SemanticAction::StartTypeTree),
-                ProductionType::NonTerminal(NonTerminal::Expr),
+                ProductionType::NonTerminal(NonTerminal::Bexpr),
+                ProductionType::Action(SemanticAction::AddTypeTree),
             ].into_boxed_slice(),
         },
-        // <if> ::= if [START_TYPE_TREE] <bexpr> then <statement_seq> <else> fi
+        // <if> ::= if [START_TYPE_TREE] <bexpr> [ADD_TYPE_TREE] then <statement_seq> <else> fi
         Production {
             left: NonTerminal::If,
             right: vec![
                 ProductionType::Terminal(Token::Kif),
                 ProductionType::Action(SemanticAction::StartTypeTree),
                 ProductionType::NonTerminal(NonTerminal::Bexpr),
+                ProductionType::Action(SemanticAction::AddTypeTree),
                 ProductionType::Terminal(Token::Kthen),
                 ProductionType::NonTerminal(NonTerminal::StatementSeq),
                 ProductionType::NonTerminal(NonTerminal::Else),
@@ -225,123 +230,12 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::Terminal(Token::Kprint),
             ].into_boxed_slice(),
         },
-        // <built_in> ::= return
+        // <built_in> ::= return [SET_RETURN_TYPE]
         Production {
             left: NonTerminal::BuiltIn,
             right: vec![
                 ProductionType::Terminal(Token::Kreturn),
-            ].into_boxed_slice(),
-        },
-        // <expr> ::= <term> <expr2>
-        Production {
-            left: NonTerminal::Expr,
-            right: vec![
-                ProductionType::NonTerminal(NonTerminal::Term),
-                ProductionType::NonTerminal(NonTerminal::Expr2),
-            ].into_boxed_slice(),
-        },
-        // <expr2> ::= + <expr>
-        Production {
-            left: NonTerminal::Expr2,
-            right: vec![
-                ProductionType::Terminal(Token::Oplus),
-                ProductionType::NonTerminal(NonTerminal::Expr),
-            ].into_boxed_slice(),
-        },
-        // <expr2> ::= - <expr>
-        Production {
-            left: NonTerminal::Expr2,
-            right: vec![
-                ProductionType::Terminal(Token::Ominus),
-                ProductionType::NonTerminal(NonTerminal::Expr),
-            ].into_boxed_slice(),
-        },
-        // <term> ::= <factor> <term2>
-        Production {
-            left: NonTerminal::Term,
-            right: vec![
-                ProductionType::NonTerminal(NonTerminal::Factor),
-                ProductionType::NonTerminal(NonTerminal::Term2),
-            ].into_boxed_slice(),
-        },
-        // <term2> ::= * <term>
-        Production {
-            left: NonTerminal::Term2,
-            right: vec![
-                ProductionType::Terminal(Token::Omultiply),
-                ProductionType::NonTerminal(NonTerminal::Term),
-            ].into_boxed_slice(),
-        },
-        // <term2> ::= / <term>
-        Production {
-            left: NonTerminal::Term2,
-            right: vec![
-                ProductionType::Terminal(Token::Odivide),
-                ProductionType::NonTerminal(NonTerminal::Term),
-            ].into_boxed_slice(),
-        },
-        // <term2> ::= % <term>
-        Production {
-            left: NonTerminal::Term2,
-            right: vec![
-                ProductionType::Terminal(Token::Omod),
-                ProductionType::NonTerminal(NonTerminal::Term),
-            ].into_boxed_slice(),
-        },
-        // <factor> ::= <id><factor2>
-        Production {
-            left: NonTerminal::Factor,
-            right: vec![
-                ProductionType::NonTerminal(NonTerminal::Id),
-                ProductionType::NonTerminal(NonTerminal::Factor2),
-            ].into_boxed_slice(),
-        },
-        // <factor> ::= <number>
-        Production {
-            left: NonTerminal::Factor,
-            right: vec![
-                ProductionType::NonTerminal(NonTerminal::Number),
-            ].into_boxed_slice(),
-        },
-        // <factor> ::= (<expr>)
-        Production {
-            left: NonTerminal::Factor,
-            right: vec![
-                ProductionType::Terminal(Token::Soparen),
-                ProductionType::NonTerminal(NonTerminal::Expr),
-                ProductionType::Terminal(Token::Scparen),
-            ].into_boxed_slice(),
-        },
-        // <factor2> ::= <var2>
-        Production {
-            left: NonTerminal::Factor2,
-            right: vec![
-                ProductionType::NonTerminal(NonTerminal::Var2),
-            ].into_boxed_slice(),
-        },
-        // <factor2> ::= (<exprseq>)
-        Production {
-            left: NonTerminal::Factor2,
-            right: vec![
-                ProductionType::Terminal(Token::Soparen),
-                ProductionType::NonTerminal(NonTerminal::ExprSeq),
-                ProductionType::Terminal(Token::Scparen),
-            ].into_boxed_slice(),
-        },
-        // <exprseq> ::= <expr><exprseq2>
-        Production {
-            left: NonTerminal::ExprSeq,
-            right: vec![
-                ProductionType::NonTerminal(NonTerminal::Expr),
-                ProductionType::NonTerminal(NonTerminal::ExprSeq2),
-            ].into_boxed_slice(),
-        },
-        // <exprseq2> ::= , <exprseq>
-        Production {
-            left: NonTerminal::ExprSeq2,
-            right: vec![
-                ProductionType::Terminal(Token::Scomma),
-                ProductionType::NonTerminal(NonTerminal::ExprSeq),
+                ProductionType::Action(SemanticAction::CheckReturnType),
             ].into_boxed_slice(),
         },
         // <bexpr> ::= <bterm> <bexpr2>
@@ -352,12 +246,14 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::Bexpr2),
             ].into_boxed_slice(),
         },
-        // <bexpr2> ::= or <bexpr>
+        // <bexpr2> ::= or [SPLIT_TREE] <bexpr> [CHECK_TYPE]
         Production {
             left: NonTerminal::Bexpr2,
             right: vec![
                 ProductionType::Terminal(Token::Kor),
+                ProductionType::Action(SemanticAction::SplitTree),
                 ProductionType::NonTerminal(NonTerminal::Bexpr),
+                ProductionType::Action(SemanticAction::CheckType),
             ].into_boxed_slice(),
         },
         // <bterm> ::= <bfactor> <bterm2>
@@ -368,116 +264,190 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::Bterm2),
             ].into_boxed_slice(),
         },
-        // <bterm2> ::= and <bterm>
+        // <bterm2> ::= and [SPLIT_TREE] <bterm> [CHECK_TYPE]
         Production {
             left: NonTerminal::Bterm2,
             right: vec![
                 ProductionType::Terminal(Token::Kand),
+                ProductionType::Action(SemanticAction::SplitTree),
                 ProductionType::NonTerminal(NonTerminal::Bterm),
+                ProductionType::Action(SemanticAction::CheckType),
             ].into_boxed_slice(),
         },
-        // <bfactor> ::= (<bfactor2>)
+        // <bfactor> ::= <expr> <bfactor2>
         Production {
             left: NonTerminal::Bfactor,
             right: vec![
-                ProductionType::Terminal(Token::Soparen),
+                ProductionType::NonTerminal(NonTerminal::Expr),
                 ProductionType::NonTerminal(NonTerminal::Bfactor2),
-                ProductionType::Terminal(Token::Scparen),
             ].into_boxed_slice(),
         },
-        // <bfactor> ::= not <bfactor>
+        // <bfactor> ::= not [ADD_OPERATOR] <bfactor> [CHECK_TYPE]
         Production {
             left: NonTerminal::Bfactor,
             right: vec![
                 ProductionType::Terminal(Token::Knot),
+                ProductionType::Action(SemanticAction::AddOperator),
                 ProductionType::NonTerminal(NonTerminal::Bfactor),
+                ProductionType::Action(SemanticAction::CheckType),
+                
             ].into_boxed_slice(),
         },
-        // <bfactor2> ::= <bexpr>
+        // <bfactor2> ::= <comp> [SPLIT_TREE] <expr> [CHECK_TYPE]
         Production {
             left: NonTerminal::Bfactor2,
             right: vec![
-                ProductionType::NonTerminal(NonTerminal::Bexpr),
-            ].into_boxed_slice(),
-        },
-        // <bfactor2> ::= <exprb> <comp> <exprb>
-        Production {
-            left: NonTerminal::Bfactor2,
-            right: vec![
-                ProductionType::NonTerminal(NonTerminal::Exprb),
                 ProductionType::NonTerminal(NonTerminal::Comp),
-                ProductionType::NonTerminal(NonTerminal::Exprb),
+                ProductionType::Action(SemanticAction::SplitTree),
+                ProductionType::NonTerminal(NonTerminal::Expr),
+                ProductionType::Action(SemanticAction::CheckType),
             ].into_boxed_slice(),
         },
-        // <exprb> ::= <termb> <exprb2>
+        // <expr> ::= <term> <expr2>
         Production {
-            left: NonTerminal::Exprb,
+            left: NonTerminal::Expr,
             right: vec![
-                ProductionType::NonTerminal(NonTerminal::Termb),
-                ProductionType::NonTerminal(NonTerminal::Exprb2),
+                ProductionType::NonTerminal(NonTerminal::Term),
+                ProductionType::NonTerminal(NonTerminal::Expr2),
             ].into_boxed_slice(),
         },
-        // <exprb2> ::= + <exprb>
+        // <expr2> ::= + [SPLIT_TREE] <expr> [CHECK_TYPE]
         Production {
-            left: NonTerminal::Exprb2,
+            left: NonTerminal::Expr2,
             right: vec![
                 ProductionType::Terminal(Token::Oplus),
-                ProductionType::NonTerminal(NonTerminal::Exprb),
+                ProductionType::Action(SemanticAction::SplitTree),
+                ProductionType::NonTerminal(NonTerminal::Expr),
+                ProductionType::Action(SemanticAction::CheckType),
             ].into_boxed_slice(),
         },
-        // <exprb2> ::= - <exprb>
+        // <expr2> ::= - [SPLIT_TREE] <expr> [CHECK_TYPE]
         Production {
-            left: NonTerminal::Exprb2,
+            left: NonTerminal::Expr2,
             right: vec![
                 ProductionType::Terminal(Token::Ominus),
-                ProductionType::NonTerminal(NonTerminal::Exprb),
+                ProductionType::Action(SemanticAction::SplitTree),
+                ProductionType::NonTerminal(NonTerminal::Expr),
+                ProductionType::Action(SemanticAction::CheckType),
             ].into_boxed_slice(),
         },
-        // <termb> ::= <factorb> <termb2>
+        // <term> ::= <neg_factor> <term2>
         Production {
-            left: NonTerminal::Termb,
+            left: NonTerminal::Term,
             right: vec![
-                ProductionType::NonTerminal(NonTerminal::Factorb),
-                ProductionType::NonTerminal(NonTerminal::Termb2),
+                ProductionType::NonTerminal(NonTerminal::NegFactor),
+                ProductionType::NonTerminal(NonTerminal::Term2),
             ].into_boxed_slice(),
         },
-        // <termb2> ::= * <termb>
+        // <term2> ::= * [SPLIT_TREE] <term> [CHECK_TYPE]
         Production {
-            left: NonTerminal::Termb2,
+            left: NonTerminal::Term2,
             right: vec![
                 ProductionType::Terminal(Token::Omultiply),
-                ProductionType::NonTerminal(NonTerminal::Termb),
+                ProductionType::Action(SemanticAction::SplitTree),
+                ProductionType::NonTerminal(NonTerminal::Term),
+                ProductionType::Action(SemanticAction::CheckType),
             ].into_boxed_slice(),
         },
-        // <termb2> ::= / <termb>
+        // <term2> ::= / [SPLIT_TREE] <term> [CHECK_TYPE]
         Production {
-            left: NonTerminal::Termb2,
+            left: NonTerminal::Term2,
             right: vec![
                 ProductionType::Terminal(Token::Odivide),
-                ProductionType::NonTerminal(NonTerminal::Termb),
+                ProductionType::Action(SemanticAction::SplitTree),
+                ProductionType::NonTerminal(NonTerminal::Term),
+                ProductionType::Action(SemanticAction::CheckType),
             ].into_boxed_slice(),
         },
-        // <termb2> ::= % <termb>
+        // <term2> ::= % [SPLIT_TREE] <term> [CHECK_TYPE]
         Production {
-            left: NonTerminal::Termb2,
+            left: NonTerminal::Term2,
             right: vec![
                 ProductionType::Terminal(Token::Omod),
-                ProductionType::NonTerminal(NonTerminal::Termb),
+                ProductionType::Action(SemanticAction::SplitTree),
+                ProductionType::NonTerminal(NonTerminal::Term),
+                ProductionType::Action(SemanticAction::CheckType),
             ].into_boxed_slice(),
         },
-        // <factorb> ::= <id><factor2>
+        // <neg_factor> ::= - [ADD_OPERATOR] <factor> [CHECK_TYPE]
         Production {
-            left: NonTerminal::Factorb,
+            left: NonTerminal::NegFactor,
+            right: vec![
+                ProductionType::Terminal(Token::Ominus),
+                ProductionType::Action(SemanticAction::AddOperator),
+                ProductionType::NonTerminal(NonTerminal::Factor),
+                ProductionType::Action(SemanticAction::CheckType),
+            ].into_boxed_slice(),
+        },
+        // <neg_factor> ::= <factor>
+        Production {
+            left: NonTerminal::NegFactor,
+            right: vec![
+                ProductionType::NonTerminal(NonTerminal::Factor),
+            ].into_boxed_slice(),
+        },
+        // <factor> ::= <id><factor2>
+        Production {
+            left: NonTerminal::Factor,
             right: vec![
                 ProductionType::NonTerminal(NonTerminal::Id),
                 ProductionType::NonTerminal(NonTerminal::Factor2),
             ].into_boxed_slice(),
         },
-        // <factorb> ::= <number>
+        // <factor> ::= <number> [SET_LITERAL]
         Production {
-            left: NonTerminal::Factorb,
+            left: NonTerminal::Factor,
             right: vec![
                 ProductionType::NonTerminal(NonTerminal::Number),
+                ProductionType::Action(SemanticAction::SetLiteral),
+            ].into_boxed_slice(),
+        },
+        // <factor> ::= ( [ADD_OPERATOR] <bexpr> ) [CHECK_TYPE]
+        Production {
+            left: NonTerminal::Factor,
+            right: vec![
+                ProductionType::Terminal(Token::Soparen),
+                ProductionType::Action(SemanticAction::AddOperator),
+                ProductionType::NonTerminal(NonTerminal::Bexpr),
+                ProductionType::Terminal(Token::Scparen),
+                ProductionType::Action(SemanticAction::CheckType),
+            ].into_boxed_slice(),
+        },
+        // <factor2> ::= <var2>
+        Production {
+            left: NonTerminal::Factor2,
+            right: vec![
+                ProductionType::NonTerminal(NonTerminal::Var2),
+            ].into_boxed_slice(),
+        },
+        // <factor2> ::= [ADD_FUNC_CHECK] (<exprseq>) [POP_FUNC_CHECK]
+        Production {
+            left: NonTerminal::Factor2,
+            right: vec![
+                ProductionType::Action(SemanticAction::AddFuncCheck),
+                ProductionType::Terminal(Token::Soparen),
+                ProductionType::NonTerminal(NonTerminal::ExprSeq),
+                ProductionType::Terminal(Token::Scparen),
+                ProductionType::Action(SemanticAction::PopFuncCheck),
+            ].into_boxed_slice(),
+        },
+        // <exprseq> ::= [START_TYPE_TREE] <bexpr> [CHECK_PARAM_TYPE] [ADD_TYPE_TREE] <exprseq2>
+        Production {
+            left: NonTerminal::ExprSeq,
+            right: vec![
+                ProductionType::Action(SemanticAction::StartTypeTree),
+                ProductionType::NonTerminal(NonTerminal::Bexpr),
+                ProductionType::Action(SemanticAction::CheckParamType),
+                ProductionType::Action(SemanticAction::AddTypeTree),
+                ProductionType::NonTerminal(NonTerminal::ExprSeq2),
+            ].into_boxed_slice(),
+        },
+        // <exprseq2> ::= , <exprseq>
+        Production {
+            left: NonTerminal::ExprSeq2,
+            right: vec![
+                ProductionType::Terminal(Token::Scomma),
+                ProductionType::NonTerminal(NonTerminal::ExprSeq),
             ].into_boxed_slice(),
         },
         // <comp> ::= LT
@@ -530,20 +500,25 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::Var2),
             ].into_boxed_slice(),
         },
-        // <var2> ::= [<expr>]
+        // <var2> ::= [ [START_TYPE_TREE] <bexpr> [CHECK_INDEX_TYPE] [ADD_TYPE_TREE] ] [SET_IS_ARRAY]
         Production {
             left: NonTerminal::Var2,
             right: vec![
                 ProductionType::Terminal(Token::Sobracket),
-                ProductionType::NonTerminal(NonTerminal::Expr),
+                ProductionType::Action(SemanticAction::StartTypeTree),
+                ProductionType::NonTerminal(NonTerminal::Bexpr),
+                ProductionType::Action(SemanticAction::CheckIndexType),
+                ProductionType::Action(SemanticAction::AddTypeTree),
                 ProductionType::Terminal(Token::Scbracket),
+                ProductionType::Action(SemanticAction::SetIsArray),
             ].into_boxed_slice(),
         },
-        // <id> ::= Identifier
+        // <id> ::= Identifier [SET_ID]
         Production {
             left: NonTerminal::Id,
             right: vec![
                 ProductionType::Terminal(Token::Identifier(String::new())),
+                ProductionType::Action(SemanticAction::SetId),
             ].into_boxed_slice(),
         },
         // <number> ::= T_INT

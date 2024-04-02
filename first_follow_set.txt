@@ -18,25 +18,21 @@ First:
 <if>: if
 <else>: else, e
 <built_in>: print, return
-<expr>: IDENTIFIER, T_INT, T_DOUBLE, (
+<bexpr>: -, IDENTIFIER, T_INT, T_DOUBLE, (, not
+<bexpr2>: or, e
+<bterm>: -, IDENTIFIER, T_INT, T_DOUBLE, (, not
+<bterm2>: and, e
+<bfactor>: -, IDENTIFIER, T_INT, T_DOUBLE, (, not
+<bfactor2>: LT, GT, EQUAL, LTE, GTE, NOT, e
+<expr>: -, IDENTIFIER, T_INT, T_DOUBLE, (
 <expr2>: +, -, e
-<term>: IDENTIFIER, T_INT, T_DOUBLE, (
+<term>: -, IDENTIFIER, T_INT, T_DOUBLE, (
 <term2>: *, /, %, e
+<neg_factor>: -, IDENTIFIER, T_INT, T_DOUBLE, (
 <factor>: IDENTIFIER, T_INT, T_DOUBLE, (
 <factor2>: [, (, e
-<exprseq>: IDENTIFIER, T_INT, T_DOUBLE, (, e
+<exprseq>: -, IDENTIFIER, T_INT, T_DOUBLE, (, not, e
 <exprseq2>: COMMA, e
-<bexpr>: (, not
-<bexpr2>: or, e
-<bterm>: (, not
-<bterm2>: and, e
-<bfactor>: (, not
-<bfactor2>: (, not, IDENTIFIER, T_INT, T_DOUBLE
-<exprb>: IDENTIFIER, T_INT, T_DOUBLE
-<exprb2>: +, -, e
-<termb>: IDENTIFIER, T_INT, T_DOUBLE
-<termb2>: *, /, %, e
-<factorb>: IDENTIFIER, T_INT, T_DOUBLE
 <comp>: LT, GT, EQUAL, LTE, GTE, NOT
 <var>: IDENTIFIER
 <var2>: [, e
@@ -63,28 +59,24 @@ Follow:
 <statement>: ., fed, od, else, fi, ;
 <if>: ., fed, od, else, fi, ;
 <else>: fi
-<built_in>: IDENTIFIER, T_INT, T_DOUBLE, (
-<expr>: ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ], and, or, do, then
-<expr2>: ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ], and, or, do, then
-<term>: +, -, ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ], and, or, do, then
-<term2>: +, -, ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ], and, or, do, then
-<factor>: *, /, %, +, -, ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ], and, or, do, then
-<factor2>: *, /, %, +, -, ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ], and, or, do, then
+<built_in>: IDENTIFIER, T_INT, T_DOUBLE, (, not
+<bexpr>: ., fed, od, else, fi, ;, do, then, ), COMMA, ]
+<bexpr2>: ., fed, od, else, fi, ;, do, then, ), COMMA, ]
+<bterm>: or, ., fed, od, else, fi, ;, do, then, ), COMMA, ]
+<bterm2>: or, ., fed, od, else, fi, ;, do, then, ), COMMA, ]
+<bfactor>: and, or, ., fed, od, else, fi, ;, do, then, ), COMMA, ]
+<bfactor2>: and, or, ., fed, od, else, fi, ;, do, then, ), COMMA, ]
+<expr>: LT, GT, EQUAL, LTE, GTE, NOT, and, or, ., fed, od, else, fi, ;, do, then, ), COMMA, ]
+<expr2>: LT, GT, EQUAL, LTE, GTE, NOT, and, or, ., fed, od, else, fi, ;, do, then, ), COMMA, ]
+<term>: +, -, LT, GT, EQUAL, LTE, GTE, NOT, and, or, ., fed, od, else, fi, ;, do, then, ), COMMA, ]
+<term2>: +, -, LT, GT, EQUAL, LTE, GTE, NOT, and, or, ., fed, od, else, fi, ;, do, then, ), COMMA, ]
+<neg_factor>: *, /, %, +, -, LT, GT, EQUAL, LTE, GTE, NOT, and, or, ., fed, od, else, fi, ;, do, then, ), COMMA, ]
+<factor>: *, /, %, +, -, LT, GT, EQUAL, LTE, GTE, NOT, and, or, ., fed, od, else, fi, ;, do, then, ), COMMA, ]
+<factor2>: *, /, %, +, -, LT, GT, EQUAL, LTE, GTE, NOT, and, or, ., fed, od, else, fi, ;, do, then, ), COMMA, ]
 <exprseq>: )
 <exprseq2>: )
-<bexpr>: do, then, )
-<bexpr2>: do, then, )
-<bterm>: or, do, then, )
-<bterm2>: or, do, then, )
-<bfactor>: and, or, do, then, )
-<bfactor2>: )
-<exprb>: LT, GT, EQUAL, LTE, GTE, NOT, )
-<exprb2>: LT, GT, EQUAL, LTE, GTE, NOT, )
-<termb>: +, -, LT, GT, EQUAL, LTE, GTE, NOT, )
-<termb2>: +, -, LT, GT, EQUAL, LTE, GTE, NOT, )
-<factorb>: *, /, %, +, -, LT, GT, EQUAL, LTE, GTE, NOT, )
 <comp>: IDENTIFIER, T_INT, T_DOUBLE, (
 <var>: ), COMMA, ;, =
-<var2>: ), COMMA, ;, =, *, /, %, +, -, ., fed, od, else, fi, LT, GT, EQUAL, LTE, GTE, NOT, ], and, or, do, then
-<id>: (, [, ), COMMA, ;, =, *, /, %, +, -, ., fed, od, else, fi, LT, GT, EQUAL, LTE, GTE, NOT, ], and, or, do, then
-<number>: *, /, %, +, -, ., fed, od, else, fi, ;, ), COMMA, LT, GT, EQUAL, LTE, GTE, NOT, ], and, or, do, then
+<var2>: *, /, %, +, -, LT, GT, EQUAL, LTE, GTE, NOT, and, or, ., fed, od, else, fi, ;, do, then, ), COMMA, ], =
+<id>: (, [, *, /, %, +, -, LT, GT, EQUAL, LTE, GTE, NOT, and, or, ., fed, od, else, fi, ;, do, then, ), COMMA, ], =
+<number>: *, /, %, +, -, LT, GT, EQUAL, LTE, GTE, NOT, and, or, ., fed, od, else, fi, ;, do, then, ), COMMA, ]
