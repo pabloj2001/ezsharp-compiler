@@ -1,6 +1,6 @@
 use crate::lexical_analysis::Token;
 use super::non_terminals::NonTerminal;
-use super::semantic_analysis::SemanticAction;
+use super::semantic_actions::SemanticAction;
 
 #[derive(Debug, Clone)]
 pub enum ProductionType {
@@ -159,16 +159,17 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::StatementSeq),
             ].into_boxed_slice(),
         },
-        // <statement> ::= <var> = [START_TYPE_TREE] <bexpr> [CHECK_VAR_TYPE] [ADD_TYPE_TREE]
+        // <statement> ::= [START_ASSIGNMENT] <var> = [START_TYPE_TREE] <bexpr> [CHECK_VAR_TYPE] [ADD_ASSIGNMENT]
         Production {
             left: NonTerminal::Statement,
             right: vec![
+                ProductionType::Action(SemanticAction::StartAssignment),
                 ProductionType::NonTerminal(NonTerminal::Var),
                 ProductionType::Terminal(Token::Oassign),
                 ProductionType::Action(SemanticAction::StartTypeTree),
                 ProductionType::NonTerminal(NonTerminal::Bexpr),
                 ProductionType::Action(SemanticAction::CheckVarType),
-                ProductionType::Action(SemanticAction::AddTypeTree),
+                ProductionType::Action(SemanticAction::AddAssignment),
             ].into_boxed_slice(),
         },
         // <statement> ::= <if>
@@ -178,16 +179,19 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::If),
             ].into_boxed_slice(),
         },
-        // <statement> ::= while [START_TYPE_TREE] <bexpr> [ADD_TYPE_TREE] do <statement_seq> od
+        // <statement> ::= while [START_WHILE] [START_TYPE_TREE] <bexpr> [ADD_CONDITION] do [NEW_SCOPE] <statement_seq> [ADD_COND_STATEMENT] od
         Production {
             left: NonTerminal::Statement,
             right: vec![
                 ProductionType::Terminal(Token::Kwhile),
+                ProductionType::Action(SemanticAction::StartWhile),
                 ProductionType::Action(SemanticAction::StartTypeTree),
                 ProductionType::NonTerminal(NonTerminal::Bexpr),
-                ProductionType::Action(SemanticAction::AddTypeTree),
+                ProductionType::Action(SemanticAction::AddCondition),
                 ProductionType::Terminal(Token::Kdo),
+                ProductionType::Action(SemanticAction::NewScope),
                 ProductionType::NonTerminal(NonTerminal::StatementSeq),
+                ProductionType::Action(SemanticAction::AddCondStatement),
                 ProductionType::Terminal(Token::Kod),
             ].into_boxed_slice(),
         },
@@ -201,41 +205,48 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::Action(SemanticAction::AddTypeTree),
             ].into_boxed_slice(),
         },
-        // <if> ::= if [START_TYPE_TREE] <bexpr> [ADD_TYPE_TREE] then <statement_seq> <else> fi
+        // <if> ::= if [START_IF] [START_TYPE_TREE] <bexpr> [ADD_CONDITION] then [NEW_SCOPE] <statement_seq> [ADD_COND_STATEMENT] <else> fi
         Production {
             left: NonTerminal::If,
             right: vec![
                 ProductionType::Terminal(Token::Kif),
+                ProductionType::Action(SemanticAction::StartIf),
                 ProductionType::Action(SemanticAction::StartTypeTree),
                 ProductionType::NonTerminal(NonTerminal::Bexpr),
-                ProductionType::Action(SemanticAction::AddTypeTree),
+                ProductionType::Action(SemanticAction::AddCondition),
                 ProductionType::Terminal(Token::Kthen),
+                ProductionType::Action(SemanticAction::NewScope),
                 ProductionType::NonTerminal(NonTerminal::StatementSeq),
+                ProductionType::Action(SemanticAction::AddCondStatement),
                 ProductionType::NonTerminal(NonTerminal::Else),
                 ProductionType::Terminal(Token::Kfi),
             ].into_boxed_slice(),
         },
-        // <else> ::= else <statement_seq>
+        // <else> ::= else [START_ELSE] [NEW_SCOPE] <statement_seq> [ADD_COND_STATEMENT]
         Production {
             left: NonTerminal::Else,
             right: vec![
                 ProductionType::Terminal(Token::Kelse),
+                ProductionType::Action(SemanticAction::StartElse),
+                ProductionType::Action(SemanticAction::NewScope),
                 ProductionType::NonTerminal(NonTerminal::StatementSeq),
+                ProductionType::Action(SemanticAction::AddCondStatement),
             ].into_boxed_slice(),
         },
-        // <built_in> ::= print
+        // <built_in> ::= print [START_PRINT]
         Production {
             left: NonTerminal::BuiltIn,
             right: vec![
                 ProductionType::Terminal(Token::Kprint),
+                ProductionType::Action(SemanticAction::StartPrint),
             ].into_boxed_slice(),
         },
-        // <built_in> ::= return [SET_RETURN_TYPE]
+        // <built_in> ::= return [START_RETURN]
         Production {
             left: NonTerminal::BuiltIn,
             right: vec![
                 ProductionType::Terminal(Token::Kreturn),
-                ProductionType::Action(SemanticAction::CheckReturnType),
+                ProductionType::Action(SemanticAction::StartReturn),
             ].into_boxed_slice(),
         },
         // <bexpr> ::= <bterm> <bexpr2>
@@ -500,17 +511,15 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::Var2),
             ].into_boxed_slice(),
         },
-        // <var2> ::= [ [START_TYPE_TREE] <bexpr> [CHECK_INDEX_TYPE] [ADD_TYPE_TREE] ] [SET_IS_ARRAY]
+        // <var2> ::= [ [START_TYPE_TREE] <bexpr> [SET_ARRAY] ]
         Production {
             left: NonTerminal::Var2,
             right: vec![
                 ProductionType::Terminal(Token::Sobracket),
                 ProductionType::Action(SemanticAction::StartTypeTree),
                 ProductionType::NonTerminal(NonTerminal::Bexpr),
-                ProductionType::Action(SemanticAction::CheckIndexType),
-                ProductionType::Action(SemanticAction::AddTypeTree),
+                ProductionType::Action(SemanticAction::SetArray),
                 ProductionType::Terminal(Token::Scbracket),
-                ProductionType::Action(SemanticAction::SetIsArray),
             ].into_boxed_slice(),
         },
         // <id> ::= Identifier [SET_ID]

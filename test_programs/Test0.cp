@@ -4,13 +4,14 @@ def int add(int x, int y)
     return x + y;
 fed;
 
-int k, x, c, a[10], b;
-k = -23;
+int x, c, a[(5 > 3) * 3], b;
+double d[1];
+c = -23;
 x = 3 + 2;
 
 // if with brackets
-if ((x + 1) < 3 and (x / 3 > 2)) then
+while ((x + a[0]) < 3 and (x / 3 > 2)) do
     print add(add(x, 3), 2);
-fi;
+od;
 
-a[2] = 3;.
+a[1] = 2 + a[x * 3];.

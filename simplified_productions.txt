@@ -25,15 +25,15 @@
 <statement_seq2> ::= ; <statement_seq> | e
 
 <statement> ::=
-		<var> = [START_TYPE_TREE] <bexpr> [CHECK_VAR_TYPE] [ADD_TYPE_TREE] |
+		[START_ASSIGNMENT] <var> = [START_TYPE_TREE] <bexpr> [CHECK_VAR_TYPE] [ADD_ASSIGNMENT] |
         <if> |
-        while [START_TYPE_TREE] <bexpr> [ADD_TYPE_TREE] do <statement_seq> od |
+        while [START_WHILE] [START_TYPE_TREE] <bexpr> [ADD_CONDITION] do [NEW_SCOPE] <statement_seq> [ADD_COND_STATEMENT] od |
         <built_in> [START_TYPE_TREE] <bexpr> [ADD_TYPE_TREE] | e
 
-<if> ::= if [START_TYPE_TREE] <bexpr> [ADD_TYPE_TREE] then <statement_seq> <else> fi
-<else> ::= else <statement_seq> | e
+<if> ::= if [START_IF] [START_TYPE_TREE] <bexpr> [ADD_CONDITION] then [NEW_SCOPE] <statement_seq> [ADD_COND_STATEMENT] <else> fi
+<else> ::= else [START_ELSE] [NEW_SCOPE] <statement_seq> [ADD_COND_STATEMENT] | e
 
-<built_in> ::= print | return [CHECK_RETURN_TYPE]
+<built_in> ::= print [START_PRINT] | return [START_RETURN]
 
 <bexpr> ::= <bterm> <bexpr2>
 <bexpr2> ::= or [SPLIT_TREE] <bexpr> [CHECK_TYPE] | e
@@ -60,7 +60,7 @@
 <comp> ::= LT | GT | EQUAL | LTE | GTE | NOT
 
 <var> ::= <id><var2>
-<var2> ::= OPEN_SQR_BRACKET [START_TYPE_TREE] <bexpr> [CHECK_INDEX_TYPE] [ADD_TYPE_TREE] CLOSING_SQR_BRACKET [SET_IS_ARRAY] | e
+<var2> ::= [ [START_TYPE_TREE] <bexpr> [SET_ARRAY] ] | e
 
 <id> ::= IDENTIFIER [SET_ID]
 

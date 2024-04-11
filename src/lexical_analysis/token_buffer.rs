@@ -109,7 +109,7 @@ impl TokenBuffer {
                         },
                         Token::Tint(_) => {
                             // Convert lexeme to integer and return as token
-                            if let Ok(int) = lexeme.parse::<i32>() {
+                            if let Ok(int) = lexeme.parse::<u32>() {
                                 return Ok(ParsedToken { token: Token::Tint(int), line: self.lines_read + 1 });
                             } else {
                                 return Err(LexicalError::InvalidToken(InvalidToken { lexeme, line: self.lines_read + 1 }));

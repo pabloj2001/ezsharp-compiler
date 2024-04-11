@@ -9,6 +9,7 @@ mod syntax_analysis;
 mod semantic_analysis;
 mod symbol_declaration;
 mod statement_tree;
+mod semantic_actions;
 
 use crate::{
     lexical_analysis::{ParsedToken, Token}, syntax_semantic_analysis::{ll1_table::{generate_ll1_table, LL1Table}, syntax_analysis::SyntaxErrorType}
@@ -132,7 +133,7 @@ pub fn perform_syntax_semantic_analysis(tokens: Vec<ParsedToken>) -> Result<Symb
                 }
             },
             ProductionType::Action(action) => {
-                println!("Action: {:?}", action);
+                // println!("Action: {:?}", action);
                 let action_result = semantic_info.perform_action(&action, &prev_terminal);
                 match action_result {
                     Ok(_) => {},
@@ -152,6 +153,7 @@ pub fn perform_syntax_semantic_analysis(tokens: Vec<ParsedToken>) -> Result<Symb
         ));
     }
     
+    dbg!(&semantic_info.symbol_table);
     if !errors.syntax_errors.is_empty() || !errors.semantic_errors.is_empty() {
         return Err(errors);
     }

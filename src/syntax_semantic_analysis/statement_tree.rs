@@ -1,20 +1,21 @@
 use crate::{lexical_analysis::Token, logger::Loggable};
 
-use super::symbol_declaration::{BasicType, SymbolDecl};
+use super::symbol_declaration::{BasicType, DeclId};
 
 #[derive(Debug, Clone)]
 pub enum StatementSymbol {
-    Decl(SymbolDecl),
+    Decl(DeclId),
     Literal(Token),
     Operator(Token),
     SingleChildOperator(Token),
-    FunctionCall(SymbolDecl, Vec<StatementTree>),
+    FunctionCall(DeclId, Vec<StatementTree>),
+    ArrayAccess(DeclId, StatementTree),
 }
 
 impl Loggable for StatementSymbol {
     fn to_log_message(&self) -> String {
         match self {
-            StatementSymbol::Decl(decl) => decl.name.clone(),
+            StatementSymbol::Decl(decl) => decl.0.clone(),
             StatementSymbol::Literal(token) => {
                 match token {
                     Token::Tint(value) => value.to_string(),
@@ -41,7 +42,7 @@ impl Loggable for StatementSymbol {
                 }
             },
             StatementSymbol::FunctionCall(decl, params) => {
-                let mut message = decl.name.clone();
+                let mut message = decl.0.clone();
                 message.push_str("(\n");
                 for param in params {
                     message.push_str(&param.to_log_message());
@@ -50,6 +51,9 @@ impl Loggable for StatementSymbol {
                 }
                 message.push_str(")");
                 message
+            },
+            StatementSymbol::ArrayAccess(decl, index) => {
+                format!("{}[{}]", decl.0, index.to_log_message())
             },
         }
     }
@@ -151,6 +155,70 @@ impl StatementTree {
         self.nodes[node].parent = Some(new_node);
 
         new_node
+    }
+
+    pub fn calculate_array_size(&self) -> Result<u32, String> {
+        if self.start.is_none() {
+            return Err(String::from("No statement provided"));
+        }
+
+        let value = StatementTree::_calculate_array_size(&self.nodes, self.start.unwrap())?;
+        if value < 0 {
+            return Err(format!("Array size must be a positive value"));
+        }
+        Ok(value as u32)
+    }
+
+    fn _calculate_array_size(nodes: &Vec<StatementNode>, start: usize) -> Result<i32, String> {
+        let node = &nodes[start];
+        match &node.symbol {
+            StatementSymbol::Literal(token) => {
+                match token {
+                    Token::Tint(value) => {
+                        Ok(*value as i32)
+                    },
+                    _ => Err(format!("Literal must be an Integer: {:?}", token)),
+                }
+            },
+            StatementSymbol::Operator(op) => {
+                if !node.has_both_children() {
+                    return Err(format!("Invalid token: {}", op.to_log_message()));
+                }
+
+                let left = StatementTree::_calculate_array_size(nodes, node.left.unwrap())?;
+                let right = StatementTree::_calculate_array_size(nodes, node.right.unwrap())?;
+                match op {
+                    Token::Oplus => Ok(left + right),
+                    Token::Ominus => Ok(left - right),
+                    Token::Omultiply => Ok(left * right),
+                    Token::Odivide => Ok(left / right),
+                    Token::Omod => Ok(left % right),
+                    Token::Kor => Ok(if left > 0 || right > 0 { 1 } else { 0 }),
+                    Token::Kand => Ok(if left > 0 && right > 0 { 1 } else { 0 }),
+                    Token::Oequal => Ok(if left == right { 1 } else { 0 }),
+                    Token::Onot => Ok(if left != right { 1 } else { 0 }),
+                    Token::Olt => Ok(if left < right { 1 } else { 0 }),
+                    Token::Ogt => Ok(if left > right { 1 } else { 0 }),
+                    Token::Olte => Ok(if left <= right { 1 } else { 0 }),
+                    Token::Ogte => Ok(if left >= right { 1 } else { 0 }),
+                    _ => Err(format!("Invalid operator: {}", op.to_log_message())),
+                }
+            },
+            StatementSymbol::SingleChildOperator(op) => {
+                if node.left.is_none() {
+                    return Err(format!("Invalid token: {}", op.to_log_message()));
+                }
+
+                let left = StatementTree::_calculate_array_size(nodes, node.left.unwrap())?;
+                match op {
+                    Token::Soparen => Ok(left),
+                    Token::Knot => Ok(if left > 0 { 0 } else { 1 }),
+                    Token::Ominus => Ok(-left),
+                    _ => Err(format!("Invalid operator: {}", op.to_log_message())),
+                }
+            },
+            _ => Err(format!("Array size must be a constant value")),
+        }
     }
 }
 

@@ -1,6 +1,13 @@
-use crate::logger::Loggable;
+use crate::{lexical_analysis::Token, logger::Loggable};
 
-use super::{semantic_analysis::SemanticErrorType, statement_tree::StatementTree, symbol_declaration::SymbolDecl};
+use super::{
+    semantic_analysis::SemanticErrorType,
+    statement_tree::{StatementNode, StatementSymbol, StatementTree},
+    symbol_declaration::{
+        DeclId,
+        SymbolDecl
+    }
+};
 
 #[derive(Debug)]
 pub enum ScopeType {
@@ -20,10 +27,47 @@ impl Loggable for ScopeType {
 }
 
 #[derive(Debug)]
+pub struct AssignmentInfo {
+    var: DeclId,
+    index: Option<StatementTree>,
+    assignment: StatementTree,
+}
+
+#[derive(Debug, Clone)]
+pub enum ConditionalStatementType {
+    If,
+    Else,
+    While,
+}
+
+#[derive(Debug)]
+pub struct ConditionalStatement {
+    pub statement_type: ConditionalStatementType,
+    pub condition: Option<StatementTree>,
+    pub body_scope: usize,
+}
+
+#[derive(Debug)]
+pub enum BuiltInFuncType {
+    Print,
+    Return,
+}
+
+#[derive(Debug)]
+pub struct BuiltInFunc {
+    pub func_type: BuiltInFuncType,
+    pub statement: StatementTree,
+}
+
+#[derive(Debug)]
 pub enum SymbolEntry {
-    Decl(SymbolDecl),
+    Decl(DeclId),
     Scope(usize),
+    Parameter(DeclId),
     StatementTree(StatementTree),
+    Assignment(AssignmentInfo),
+    ConditionalStatement(ConditionalStatement),
+    BuiltInFunction(BuiltInFunc),
 }
 
 #[derive(Debug)]
@@ -44,13 +88,17 @@ impl SymbolScope {
         }
     }
 
-    pub fn add_declaration(&mut self, decl: SymbolDecl) {
-        self.symbols.push(SymbolEntry::Decl(decl));
+    pub fn add_declaration(&mut self, id: DeclId) {
+        self.symbols.push(SymbolEntry::Decl(id));
     }
 
-    pub fn add_decl_new_scope(&mut self, decl: SymbolDecl, new_scope: usize) {
-        self.symbols.push(SymbolEntry::Decl(decl));
+    pub fn add_decl_new_scope(&mut self, id: DeclId, new_scope: usize) {
+        self.symbols.push(SymbolEntry::Decl(id));
         self.symbols.push(SymbolEntry::Scope(new_scope));
+    }
+
+    pub fn add_parameter(&mut self, id: DeclId) {
+        self.symbols.push(SymbolEntry::Parameter(id));
     }
 }
 
@@ -75,24 +123,24 @@ impl SymbolTable {
         self.scopes.len() - 1
     }
 
+    pub fn get_scope(&self, scope: usize) -> &SymbolScope {
+        &self.scopes[scope]
+    }
+
     pub fn get_parent_scope(&mut self, curr_scope: usize) -> usize {
         self.scopes[curr_scope].parent_scope
     }
 
     pub fn add_declaration(&mut self, symbol_decl: SymbolDecl) -> Result<(), SemanticErrorType> {
         self.insert_decl(symbol_decl.clone())?;
-        self.scopes[symbol_decl.scope].add_declaration(symbol_decl);
+        self.scopes[symbol_decl.scope].add_declaration(symbol_decl.get_id());
         Ok(())
     }
 
     pub fn add_decl_new_scope(&mut self, symbol_decl: SymbolDecl, new_scope: usize) -> Result<(), SemanticErrorType> {
         self.insert_decl(symbol_decl.clone())?;
-        self.scopes[symbol_decl.scope].add_decl_new_scope(symbol_decl, new_scope);
+        self.scopes[symbol_decl.scope].add_decl_new_scope(symbol_decl.get_id(), new_scope);
         Ok(())
-    }
-
-    pub fn add_type_tree(&mut self, tree: StatementTree, scope: usize) {
-        self.scopes[scope].symbols.push(SymbolEntry::StatementTree(tree));
     }
 
     fn insert_decl(&mut self, decl: SymbolDecl) -> Result<usize, SemanticErrorType> {
@@ -120,10 +168,6 @@ impl SymbolTable {
 
         self.decls.insert(low, decl);
         Ok(low)
-    }
-
-    pub fn get_scope(&self, scope: usize) -> &SymbolScope {
-        &self.scopes[scope]
     }
 
     pub fn find_decl(&self, name: &String, curr_scope: usize) -> Option<&SymbolDecl> {
@@ -158,10 +202,48 @@ impl SymbolTable {
             }
         }
         
-        match greatest_scope {
+        match greatest_index {
             Some(_) => Some(&self.decls[greatest_index.unwrap()]),
             None => None,
         }
+    }
+
+    pub fn find_decl_by_id(&self, id: &DeclId) -> Option<&SymbolDecl> {
+        self.find_decl(&id.0, id.1)
+    }
+
+    pub fn add_parameter(&mut self, symbol_decl: SymbolDecl) -> Result<(), SemanticErrorType> {
+        self.insert_decl(symbol_decl.clone())?;
+        self.scopes[symbol_decl.scope].add_parameter(symbol_decl.get_id());
+        Ok(())
+    }
+
+    pub fn add_type_tree(&mut self, tree: StatementTree, scope: usize) {
+        self.scopes[scope].symbols.push(SymbolEntry::StatementTree(tree));
+    }
+
+    pub fn add_assignment(&mut self, var: SymbolDecl, index: Option<StatementTree>, assignment: StatementTree) {
+        self.scopes[var.scope].symbols.push(
+            SymbolEntry::Assignment(
+                AssignmentInfo {
+                    var: var.get_id(),
+                    index,
+                    assignment,
+                }
+            )
+        );
+    }
+
+    pub fn add_conditional_statement(&mut self, statement: ConditionalStatement, curr_scope: usize) {
+        self.scopes[curr_scope].symbols.push(
+            SymbolEntry::ConditionalStatement(statement)
+        );
+    }
+
+    pub fn add_builtin_func(&mut self, func: BuiltInFunc, curr_scope: usize) {
+        self.scopes[curr_scope].symbols.push(
+            SymbolEntry::BuiltInFunction(func)
+        );
     }
 }
 
@@ -189,8 +271,10 @@ impl Loggable for SymbolTable {
                 curr_symbol += 1;
 
                 match symbol {
-                    SymbolEntry::Decl(decl) => {
-                        msg.push_str(format!("{}{}", "\t".repeat(tabs), decl.to_log_message()).as_str());
+                    SymbolEntry::Decl(decl_id) | SymbolEntry::Parameter(decl_id) => {
+                        if let Some(decl) = self.find_decl_by_id(decl_id) {
+                            msg.push_str(format!("{}{}", "\t".repeat(tabs), decl.to_log_message()).as_str());
+                        }
                     },
                     SymbolEntry::Scope(new_scope) => {
                         scope_stack.push(curr_scope);

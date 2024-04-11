@@ -13,6 +13,7 @@ pub enum BasicType {
     Int,
     Double,
     Function(FuncInfo),
+    Array(Box<BasicType>, u32),
 }
 
 impl Loggable for BasicType {
@@ -34,6 +35,9 @@ impl Loggable for BasicType {
                 message.push_str(&func_info.return_type.to_log_message());
                 message
             }
+            BasicType::Array(inner_type, size) => {
+                format!("[{}; {}]", inner_type.to_log_message(), *size)
+            }
         }
     }
 }
@@ -44,18 +48,20 @@ impl Display for BasicType {
     }
 }
 
+pub type DeclId = (String, usize);
+
 #[derive(Clone, Debug)]
 pub struct SymbolDecl {
     pub name: String,
-    pub var_type: (BasicType, bool),
+    pub var_type: BasicType,
     pub scope: usize,
 }
 
 impl SymbolDecl {
-    pub fn new(name: String, var_type: BasicType, is_array: bool, scope: usize) -> SymbolDecl {
+    pub fn new(name: String, var_type: BasicType, scope: usize) -> SymbolDecl {
         SymbolDecl {
             name,
-            var_type: (var_type, is_array),
+            var_type: var_type,
             scope,
         }
     }
@@ -63,7 +69,6 @@ impl SymbolDecl {
     pub fn new_func(
         name: String,
         return_type: BasicType,
-        return_type_is_array: bool,
         scope: usize
     ) -> SymbolDecl {
         let func_info = FuncInfo {
@@ -72,19 +77,18 @@ impl SymbolDecl {
         };
         SymbolDecl {
             name,
-            var_type: (BasicType::Function(func_info), return_type_is_array),
+            var_type: BasicType::Function(func_info),
             scope,
         }
+    }
+
+    pub fn get_id(&self) -> DeclId {
+        (self.name.clone(), self.scope)
     }
 }
 
 impl Loggable for SymbolDecl {
     fn to_log_message(&self) -> String {
-        format!(
-            "{}: {}{}\n",
-            self.name,
-            self.var_type.0.to_log_message(),
-            if self.var_type.1 { "[]" } else { "" }
-        )
+        format!("{}: {}\n", self.name, self.var_type.to_log_message())
     }
 }

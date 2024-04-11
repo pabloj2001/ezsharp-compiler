@@ -45,7 +45,7 @@ impl Loggable for LexicalError {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Identifier(String),
-    Tint(i32),
+    Tint(u32),
     Tdouble(f64),
     Kif,
     Kthen,
