@@ -4,8 +4,7 @@ use super::{
     semantic_analysis::SemanticErrorType,
     statement_tree::{StatementNode, StatementSymbol, StatementTree},
     symbol_declaration::{
-        DeclId,
-        SymbolDecl
+        BasicType, DeclId, SymbolDecl
     }
 };
 
@@ -28,9 +27,9 @@ impl Loggable for ScopeType {
 
 #[derive(Debug)]
 pub struct AssignmentInfo {
-    var: DeclId,
-    index: Option<StatementTree>,
-    assignment: StatementTree,
+    pub var: DeclId,
+    pub index: Option<StatementTree>,
+    pub assignment: StatementTree,
 }
 
 #[derive(Debug, Clone)]
@@ -92,13 +91,12 @@ impl SymbolScope {
         self.symbols.push(SymbolEntry::Decl(id));
     }
 
-    pub fn add_decl_new_scope(&mut self, id: DeclId, new_scope: usize) {
-        self.symbols.push(SymbolEntry::Decl(id));
-        self.symbols.push(SymbolEntry::Scope(new_scope));
-    }
-
     pub fn add_parameter(&mut self, id: DeclId) {
         self.symbols.push(SymbolEntry::Parameter(id));
+    }
+
+    pub fn get_symbols(&self) -> &Vec<SymbolEntry> {
+        &self.symbols
     }
 }
 
@@ -131,15 +129,13 @@ impl SymbolTable {
         self.scopes[curr_scope].parent_scope
     }
 
+    pub fn get_scope_count(&self) -> usize {
+        self.scopes.len()
+    }
+
     pub fn add_declaration(&mut self, symbol_decl: SymbolDecl) -> Result<(), SemanticErrorType> {
         self.insert_decl(symbol_decl.clone())?;
         self.scopes[symbol_decl.scope].add_declaration(symbol_decl.get_id());
-        Ok(())
-    }
-
-    pub fn add_decl_new_scope(&mut self, symbol_decl: SymbolDecl, new_scope: usize) -> Result<(), SemanticErrorType> {
-        self.insert_decl(symbol_decl.clone())?;
-        self.scopes[symbol_decl.scope].add_decl_new_scope(symbol_decl.get_id(), new_scope);
         Ok(())
     }
 
@@ -274,6 +270,12 @@ impl Loggable for SymbolTable {
                     SymbolEntry::Decl(decl_id) | SymbolEntry::Parameter(decl_id) => {
                         if let Some(decl) = self.find_decl_by_id(decl_id) {
                             msg.push_str(format!("{}{}", "\t".repeat(tabs), decl.to_log_message()).as_str());
+                            if let BasicType::Function(func) = &decl.var_type {
+                                scope_stack.push(curr_scope);
+                                return_stack.push(curr_symbol);
+                                scope_stack.push(func.body_scope);
+                                break;
+                            }
                         }
                     },
                     SymbolEntry::Scope(new_scope) => {

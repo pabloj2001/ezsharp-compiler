@@ -4,11 +4,11 @@ mod first_set;
 mod follow_set;
 mod non_terminals;
 mod stack;
-mod symbol_table;
+pub mod symbol_table;
 mod syntax_analysis;
 mod semantic_analysis;
-mod symbol_declaration;
-mod statement_tree;
+pub mod symbol_declaration;
+pub mod statement_tree;
 mod semantic_actions;
 
 use crate::{
@@ -153,7 +153,7 @@ pub fn perform_syntax_semantic_analysis(tokens: Vec<ParsedToken>) -> Result<Symb
         ));
     }
     
-    dbg!(&semantic_info.symbol_table);
+    // dbg!(&semantic_info.symbol_table);
     if !errors.syntax_errors.is_empty() || !errors.semantic_errors.is_empty() {
         return Err(errors);
     }

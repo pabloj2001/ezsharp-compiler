@@ -225,7 +225,6 @@ impl SemanticInfo {
             SemanticAction::StartPrint => {
                 self.curr_builtin_func = Some(BuiltInFuncType::Print);
             },
-            _ => {}
         }
         Ok(())
     }
@@ -422,6 +421,7 @@ impl SemanticInfo {
                 self.curr_func = Some(SymbolDecl::new_func(
                     id.clone(),
                     basic_type.clone(),
+                    self.func_scope,
                     self.curr_scope,
                 ));
             }
@@ -452,7 +452,7 @@ impl SemanticInfo {
     fn add_func_decl(&mut self) -> Result<(), SemanticErrorType> {
         if let Some(func) = &self.curr_func {
             // Add function to symbol table
-            self.symbol_table.add_decl_new_scope(func.clone(), self.func_scope)?;
+            self.symbol_table.add_declaration(func.clone())?;
 
             // Set current scope to function scope
             self.curr_scope = self.func_scope;
@@ -587,7 +587,7 @@ impl SemanticInfo {
                     node = tree_info.curr_node.unwrap();
                 }
 
-                if let StatementSymbol::Operator(_) = tree_info.tree.nodes[node].symbol {
+                if let StatementSymbol::Operator(op) = &tree_info.tree.nodes[node].symbol {
                     if let Some(left) = tree_info.tree.nodes[node].left {
                         if let Some(right) = tree_info.tree.nodes[node].right {
                             // Check if left and right nodes have the same type
@@ -597,15 +597,31 @@ impl SemanticInfo {
                             if left_type.is_some() && right_type.is_some() {
                                 let left_type = left_type.unwrap();
                                 let right_type = right_type.unwrap();
-                                if left_type != right_type {
-                                    self.type_trees.pop();
-                                    return Err(SemanticErrorType::TypeMismatch(
-                                        format!("{} != {}", left_type, right_type)
-                                    ));
+                                if *op != Token::Kand && *op != Token::Kor {
+                                    if left_type != right_type {
+                                        self.type_trees.pop();
+                                        return Err(SemanticErrorType::TypeMismatch(
+                                            format!("{} != {}", left_type, right_type)
+                                        ));
+                                    }
                                 }
     
                                 // Set current node's type
-                                tree_info.tree.nodes[node].node_type = left_type.clone().into();
+                                match op {
+                                    Token::Kand |
+                                    Token::Kor |
+                                    Token::Oequal |
+                                    Token::Onot |
+                                    Token::Olt |
+                                    Token::Ogt |
+                                    Token::Olte |
+                                    Token::Ogte => {
+                                        tree_info.tree.nodes[node].node_type = Some(BasicType::Int);
+                                    },
+                                    _ => {
+                                        tree_info.tree.nodes[node].node_type = left_type.clone().into();
+                                    }
+                                }
                             } else {
                                 self.type_trees.pop();
                                 return Err(SemanticErrorType::InvalidType(

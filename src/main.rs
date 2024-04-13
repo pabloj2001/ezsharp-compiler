@@ -1,11 +1,13 @@
 mod lexical_analysis;
 mod syntax_semantic_analysis;
+mod intermediate_code_generation;
 mod logger;
 
 use crate::logger::FileLogAttributes;
 
 use std::env;
 use lexical_analysis::ParsedToken;
+use syntax_semantic_analysis::symbol_table::SymbolTable;
 
 fn main() {
     let mut log_folder = String::from("logs");
@@ -54,7 +56,7 @@ fn main() {
 
     // Perform syntax analysis on the file
     let syntax_result = syntax_semantic_analysis::perform_syntax_semantic_analysis(tokens);
-    match syntax_result {
+    let table: SymbolTable = match syntax_result {
         Ok(table) => {
             logger::log_to_file(
                 &table,
@@ -63,22 +65,27 @@ fn main() {
             logger::clear_log_file((log_folder.clone() + "/syntax_errors.log").to_string()).unwrap();
             logger::clear_log_file((log_folder.clone() + "/semantic_errors.log").to_string()).unwrap();
             println!("Syntax and Semantic analysis completed successfully");
+            table
         },
         Err(e) => {
+            logger::clear_log_file((log_folder.clone() + "/symbol_table.log").to_string()).unwrap();
             if !e.syntax_errors.is_empty() {
+                // Syntax errors
                 logger::log_to_file(
                     &e.syntax_errors.into_boxed_slice(),
                     &FileLogAttributes::new((log_folder.clone() + "/syntax_errors.log").to_string(), false),
                 ).unwrap();
-                println!("Syntax errors found. Check logs for more information.");
-            } else if !e.semantic_errors.is_empty() {
+                panic!("Syntax errors found. Check logs for more information.");
+            } else {
+                // Semantic errors
                 logger::log_to_file(
                     &e.semantic_errors.into_boxed_slice(),
                     &FileLogAttributes::new((log_folder.clone() + "/semantic_errors.log").to_string(), false),
                 ).unwrap();
-                println!("Semantic errors found. Check logs for more information.");
+                panic!("Semantic errors found. Check logs for more information.");
             }
-            logger::clear_log_file((log_folder.clone() + "/symbol_table.log").to_string()).unwrap();
         }
-    }
+    };
+
+    let tax_program = intermediate_code_generation::perform_intermediate_code_generation(table);
 }

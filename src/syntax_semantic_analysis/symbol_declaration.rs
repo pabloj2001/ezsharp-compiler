@@ -6,6 +6,7 @@ use crate::logger::Loggable;
 pub struct FuncInfo {
     pub return_type: Box<BasicType>,
     pub param_types: Vec<BasicType>,
+    pub body_scope: usize,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -50,6 +51,10 @@ impl Display for BasicType {
 
 pub type DeclId = (String, usize);
 
+pub fn to_var_name(decl_id: &DeclId) -> String {
+    format!("{}{}", decl_id.0, decl_id.1)
+}
+
 #[derive(Clone, Debug)]
 pub struct SymbolDecl {
     pub name: String,
@@ -69,11 +74,13 @@ impl SymbolDecl {
     pub fn new_func(
         name: String,
         return_type: BasicType,
+        body_scope: usize,
         scope: usize
     ) -> SymbolDecl {
         let func_info = FuncInfo {
             return_type: Box::new(return_type),
             param_types: Vec::new(),
+            body_scope,
         };
         SymbolDecl {
             name,
@@ -84,6 +91,10 @@ impl SymbolDecl {
 
     pub fn get_id(&self) -> DeclId {
         (self.name.clone(), self.scope)
+    }
+
+    pub fn to_var_name(&self) -> String {
+        format!("{}{}", self.name, self.scope)
     }
 }
 
