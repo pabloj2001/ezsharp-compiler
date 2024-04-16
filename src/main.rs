@@ -11,9 +11,10 @@ use syntax_semantic_analysis::symbol_table::SymbolTable;
 
 fn main() {
     let mut log_folder = String::from("logs");
+    let mut output_file = String::from("o.tac");
 
     let args: Vec<String> = env::args().collect();
-    if args.len() < 2 || args[1].contains(&String::from("--")) {
+    if args.len() < 2 {
         panic!("No input file provided");
     }
 
@@ -29,6 +30,14 @@ fn main() {
                 panic!("No log folder provided");
             }
             log_folder = args[log_folder_pos].clone();
+        }
+
+        if args.contains(&String::from("--output")) {
+            let output_file_pos = args.iter().position(|arg| arg == "--output").unwrap() + 1;
+            if output_file_pos >= args.len() {
+                panic!("No output file provided");
+            }
+            output_file = args[output_file_pos].clone();
         }
     }
 
@@ -92,7 +101,7 @@ fn main() {
     // dbg!(&tac_program);
     logger::log_to_file(
         &tac_program,
-        &FileLogAttributes::new((log_folder.clone() + "/tac").to_string(), false),
+        &FileLogAttributes::new((log_folder.clone() + "/" + &output_file).to_string(), false),
     ).unwrap();
     println!("Intermediate code generation completed successfully");
 }

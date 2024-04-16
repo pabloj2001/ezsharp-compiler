@@ -53,10 +53,6 @@ impl TacProgramBuilder {
         program_builder
     }
 
-    pub fn get_func(&self, index: usize) -> &TacFunctionInfo {
-        &self.funcs[index]
-    }
-
     //MARK: get_program
     // Consumes self
     pub fn get_program(self) -> TacProgram {

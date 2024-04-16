@@ -1,5 +1,5 @@
 # EZSharp Compiler
-EZSharp is a Java-like language originally created by Professor Eugene Zima at Wilfrid Laurier University. This compiler is a project for the CP471 course at WLU. The compiler is written in Rust to take advantage of its performance and safety features.
+EZSharp is a Java-like language originally created by Professor Eugene Zima at Wilfrid Laurier University. This compiler is a project for the CP471 course at WLU taught by Professor Nakhat Fatima. The compiler is written in Rust to take advantage of its performance and memory safety features.
 
 ## Features
 These are the necessary features needed for the project to be completed. They are updated as the project progresses.
@@ -8,6 +8,8 @@ These are the necessary features needed for the project to be completed. They ar
 2. ✅ Syntax Analysis
 3. ✅ Semantic Analysis
 4. ✅ Intermediary Code Generation
+5. ❌ Optimization
+6. ❌ Assembly Code Generation
 
 ## Building
 To build the project, you need to have Rust installed. You can install Rust by following the instructions on the [official website](https://www.rust-lang.org/tools/install).
@@ -28,15 +30,14 @@ Or you can run the compiled binary for the current release directly (tested on W
 ./ezsharp_compiler.exe <path-to-ezsharp-file>
 ```
 
-The compiler only outputs the tokens found during Lexical Analysis, the symbols found during Syntax Analysis, and the 3-TAC program:
-- The outputs are logged to a file called `tokens.log`, `symbol_table.log`, and `tac` respectively in a directory called `logs` in the root of the project.
+The compiler outputs the tokens found during Lexical Analysis, the symbols found during Syntax Analysis, and the 3-TAC program:
+- The outputs are logged to a file called `tokens.log`, `symbol_table.log`, and `o.tac` respectively in a directory called `logs` in the root of the project.
 - Any errors found during Lexical Analysis are also logged to a file called `lexical_errors.log` in the same directory.
 - Any errors found during Syntax Analysis are also logged to a file called `syntax_errors.log` in the same directory.
 
-This directory can be changed by providing the `--log-folder` option to the compiler:
-```bash
-cargo run -- <path-to-ezsharp-file> --log-folder <path-to-log-folder>
-```
+The compiler supports the following options:
+- `--log-folder <path-to-log-folder>`: Folder to log the outputs and errors to (default is `logs`).
+- `--output <output-file-name>`: Output file for the 3-TAC program (default is `o.tac`).
 
 ## Examples
 The `test_programs` directory contains some sample EZSharp programs that can be used to test the compiler.
@@ -104,7 +105,7 @@ Outputs the following symbols to the `symbol_table.log` file:
 }
 ```
 
-And outputs the 3-TAC codes to the `tac` file:
+And outputs the 3-TAC codes to the `o.tac` file:
 ```
 	Goto main0;
 add1:
@@ -116,7 +117,6 @@ add1:
 	EndFunc;
 ...
 	PopParams 4;
-	Goto fi4;
 fi4:
 	Goto while0;
 od1:
@@ -126,15 +126,25 @@ od1:
 ```
 
 ## Future Improvements
-- Syntax Analysis
+- Lexical Analysis
     - Automate First and Follow sets generation
+
+- Syntax Analysis
     - Give better error messages (using empty cells in LL(1) table)
-    - ~~Clean up symbol table creation~~
-    - ~~Add support for parantheses in boolean expressions~~
-    - ~~Add support for negated expressions (grammar change)~~
+    - ~~Clean up symbol table creation~~ (completed in Semantic Analysis)
+    - ~~Add support for parantheses in boolean expressions~~ (completed in Semantic Analysis)
+    - ~~Add support for negated expressions (grammar change)~~ (completed in Semantic Analysis)
+
+- Semantic Analysis
+	- Clean up semantic actions
+
+- Intermediary Code Generation
+	- Use standard 3-TAC format
+	- 3-TAC optimization
+	- Properly propagate types to temp variables
 
 ## Additional Notes
 - The Productions for this grammar and the First and Follow sets were generated manually and can be found in the `simplified_productions.txt` and `first_follow_set.txt` files respectively.
 - The LL(1) table is generated automatically using the First and Follow sets, but a copy of what it looks like can be found in the `LL1_table.csv` file.
     - The production indices are the same as the indices for the productions found in the `syntax_analysis/productions.rs` file.
-    - Production index + 1 is outside of the array bounds as it represents all productions that go to epsilon.
+    - There's a production index used which is outside of the array bounds that represents all productions that go to epsilon.
