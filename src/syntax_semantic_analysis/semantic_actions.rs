@@ -4,6 +4,7 @@ pub enum SemanticAction {
     AddFuncDecl,
     NewScope,
     PopScope,
+    PopFunc,
     AddParam,
     SetType,
     AddVarDecl,

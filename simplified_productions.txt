@@ -2,7 +2,7 @@
 
 <fdecls> ::= <fdec>; <fdecls> | e
 
-<fdec> ::= def <type> <fname> [SET_FUNC] ( <params> ) [ADD_FUNC_DECL] <declarations_seq> fed [POP_SCOPE]
+<fdec> ::= def <type> <fname> [SET_FUNC] ( <params> ) [ADD_FUNC_DECL] <declarations_seq> fed [POP_FUNC]
 
 <params> ::= <type_var> [ADD_PARAM] <params2> | e
 <params2> ::= , <params> | e

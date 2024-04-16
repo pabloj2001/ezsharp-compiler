@@ -35,7 +35,7 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::NonTerminal(NonTerminal::Fdecls),
             ].into_boxed_slice(),
         },
-        // <fdec> ::= def <type> <fname> [SET_FUNC] ( <params> ) [ADD_FUNC_DECL] <declarations_seq> fed [CHECK_RETURN_TYPE] [POP_SCOPE]
+        // <fdec> ::= def <type> <fname> [SET_FUNC] ( <params> ) [ADD_FUNC_DECL] <declarations_seq> fed [CHECK_RETURN_TYPE] [POP_FUNC]
         Production {
             left: NonTerminal::Fdec,
             right: vec![
@@ -49,7 +49,7 @@ pub fn get_constant_productions() -> Box<[Production]> {
                 ProductionType::Action(SemanticAction::AddFuncDecl),
                 ProductionType::NonTerminal(NonTerminal::DeclarationsSeq),
                 ProductionType::Terminal(Token::Kfed),
-                ProductionType::Action(SemanticAction::PopScope),
+                ProductionType::Action(SemanticAction::PopFunc),
             ].into_boxed_slice(),
         },
         // <params> ::= <type_var> [ADD_PARAM] <params2>

@@ -9,9 +9,12 @@ double d[1];
 c = -23;
 x = 3 + 2;
 
-// if with brackets
+// while with brackets
 while ((x + a[0]) < 3 and (x / 3 > 2)) do
-    print add(add(x, 3), 2);
+    x = x + 1;
+    if (x > 3) then
+        print add(add(x, 3) * 4, 2);
+    fi;
 od;
 
 a[1] = 2 + a[x * 3];.

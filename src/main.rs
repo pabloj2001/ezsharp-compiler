@@ -55,6 +55,9 @@ fn main() {
     };
 
     // Perform syntax analysis on the file
+    logger::clear_log_file((log_folder.clone() + "/syntax_errors.log").to_string()).unwrap();
+    logger::clear_log_file((log_folder.clone() + "/semantic_errors.log").to_string()).unwrap();
+    
     let syntax_result = syntax_semantic_analysis::perform_syntax_semantic_analysis(tokens);
     let table: SymbolTable = match syntax_result {
         Ok(table) => {
@@ -62,8 +65,6 @@ fn main() {
                 &table,
                 &FileLogAttributes::new((log_folder.clone() + "/symbol_table.log").to_string(), false),
             ).unwrap();
-            logger::clear_log_file((log_folder.clone() + "/syntax_errors.log").to_string()).unwrap();
-            logger::clear_log_file((log_folder.clone() + "/semantic_errors.log").to_string()).unwrap();
             println!("Syntax and Semantic analysis completed successfully");
             table
         },
@@ -87,5 +88,11 @@ fn main() {
         }
     };
 
-    let tax_program = intermediate_code_generation::perform_intermediate_code_generation(table);
+    let tac_program = intermediate_code_generation::perform_intermediate_code_generation(table);
+    // dbg!(&tac_program);
+    logger::log_to_file(
+        &tac_program,
+        &FileLogAttributes::new((log_folder.clone() + "/tac").to_string(), false),
+    ).unwrap();
+    println!("Intermediate code generation completed successfully");
 }

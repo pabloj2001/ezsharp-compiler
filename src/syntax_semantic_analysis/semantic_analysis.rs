@@ -170,6 +170,10 @@ impl SemanticInfo {
             SemanticAction::AddFuncDecl => {
                 self.add_func_decl()?;
             },
+            SemanticAction::PopFunc => {
+                self.pop_scope();
+                self.func_return_type = None;
+            },
             SemanticAction::StartTypeTree => {
                 self.type_trees.push(StatementTreeInfo::new());
             },
@@ -408,7 +412,6 @@ impl SemanticInfo {
 
     fn pop_scope(&mut self) {
         self.curr_scope = self.symbol_table.get_parent_scope(self.curr_scope);
-        self.func_return_type = None;
     }
 
     fn set_func(&mut self, prev_terminal: &Option<Token>) {
@@ -576,8 +579,9 @@ impl SemanticInfo {
         if let Some(tree_info) = self.type_trees.last_mut() {
             if let Some(mut node) = tree_info.curr_node {
                 while match tree_info.tree.nodes[node].symbol {
-                    StatementSymbol::Operator(_) => false,
-                    StatementSymbol::SingleChildOperator(_) => false,
+                    StatementSymbol::Operator(_)
+                        | StatementSymbol::SingleChildOperator(_)
+                        | StatementSymbol::FunctionCall(_, _) => false,
                     _ => true,
                 } {
                     tree_info.curr_node = tree_info.tree.nodes[node].parent;
@@ -590,6 +594,13 @@ impl SemanticInfo {
                 if let StatementSymbol::Operator(op) = &tree_info.tree.nodes[node].symbol {
                     if let Some(left) = tree_info.tree.nodes[node].left {
                         if let Some(right) = tree_info.tree.nodes[node].right {
+                            if left >= tree_info.tree.nodes.len() || right >= tree_info.tree.nodes.len() {
+                                self.type_trees.pop();
+                                return Err(SemanticErrorType::InvalidType(
+                                    "Type not found".to_string()
+                                ));
+                            }
+
                             // Check if left and right nodes have the same type
                             let left_type = tree_info.tree.nodes[left].node_type.clone();
                             let right_type = tree_info.tree.nodes[right].node_type.clone();
@@ -631,7 +642,7 @@ impl SemanticInfo {
                         }
                     }
                     tree_info.curr_node = tree_info.tree.nodes[node].parent;
-                } else if let StatementSymbol::SingleChildOperator(_) = tree_info.tree.nodes[node].symbol {
+                } else if let StatementSymbol::SingleChildOperator(_) = &tree_info.tree.nodes[node].symbol {
                     if let Some(left) = tree_info.tree.nodes[node].left {
                         let left_type = tree_info.tree.nodes[left].node_type.clone();
                         if left_type.is_some() {
@@ -642,6 +653,18 @@ impl SemanticInfo {
                                 "Type not found".to_string()
                             ));
                         }
+                    }
+                } else if let StatementSymbol::FunctionCall(func_id, _) = &tree_info.tree.nodes[node].symbol {
+                    if let Some(decl) = self.symbol_table.find_decl_by_id(&func_id) {
+                        if let BasicType::Function(func_info) = &decl.var_type {
+                            tree_info.tree.nodes[node].node_type = Some(*func_info.return_type.clone());
+                        }
+                    } else {
+                        let err = Err(SemanticErrorType::UndefinedVariable(
+                            func_id.0.clone()
+                        ));
+                        self.type_trees.pop();
+                        return err;
                     }
                 }
                 tree_info.curr_node = tree_info.tree.nodes[node].parent;
@@ -682,6 +705,21 @@ impl SemanticInfo {
     fn add_func_check(&mut self) -> Result<(), SemanticErrorType> {
         if let Some(tree_info) = self.type_trees.last_mut() {
             if let Some(node) = tree_info.tree.nodes.pop() {
+                // Update parent node and tree's current node
+                tree_info.curr_node = node.parent;
+                if let Some(parent) = node.parent {
+                    let node_index = tree_info.tree.nodes.len();
+                    if let Some(parent_node) = tree_info.tree.nodes.get_mut(parent) {
+                        if parent_node.left == Some(node_index) {
+                            parent_node.left = None;
+                        } else {
+                            parent_node.right = None;
+                        }
+                    }
+                } else {
+                    tree_info.tree.start = None;
+                }
+
                 if let StatementSymbol::Decl(func_id) = node.symbol {
                     if let Some(decl) = self.symbol_table.find_decl_by_id(&func_id) {
                         if let BasicType::Function(_) = decl.var_type {
@@ -775,10 +813,10 @@ impl SemanticInfo {
         if let Some(tree_info) = self.type_trees.pop() {
             if let Some(var) = &self.curr_var {
                 if let Some(arr_index) = &self.curr_array_index {
-                    self.symbol_table.add_assignment(var.clone(), Some(arr_index.clone()), tree_info.tree);
+                    self.symbol_table.add_assignment(var.clone(), Some(arr_index.clone()), tree_info.tree, self.curr_scope);
                     self.curr_array_index = None;
                 } else {
-                    self.symbol_table.add_assignment(var.clone(), None, tree_info.tree);
+                    self.symbol_table.add_assignment(var.clone(), None, tree_info.tree, self.curr_scope);
                 }
             }
         }

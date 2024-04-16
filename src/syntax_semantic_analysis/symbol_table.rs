@@ -105,7 +105,7 @@ pub const GLOBAL_SCOPE: usize = 0;
 #[derive(Debug)]
 pub struct SymbolTable {
     scopes: Vec<SymbolScope>,
-    decls: Vec<SymbolDecl>,
+    decls: Vec<(String, Vec<SymbolDecl>)>,
 }
 
 impl SymbolTable {
@@ -125,7 +125,7 @@ impl SymbolTable {
         &self.scopes[scope]
     }
 
-    pub fn get_parent_scope(&mut self, curr_scope: usize) -> usize {
+    pub fn get_parent_scope(&self, curr_scope: usize) -> usize {
         self.scopes[curr_scope].parent_scope
     }
 
@@ -139,69 +139,70 @@ impl SymbolTable {
         Ok(())
     }
 
-    fn insert_decl(&mut self, decl: SymbolDecl) -> Result<usize, SemanticErrorType> {
+    fn insert_decl(&mut self, decl: SymbolDecl) -> Result<(), SemanticErrorType> {
         let mut low: usize = 0;
         let mut high: usize = self.decls.len();
 
         while low < high {
             let index: usize = (high + low) / 2;
-            if self.decls[index].name == decl.name {
-                if self.decls[index].scope == decl.scope {
-                    return Err(SemanticErrorType::DuplicateDeclaration(
-                        format!("Symbol {} already declared in scope {}", decl.name, decl.scope)
-                    ));
-                } else if self.decls[index].scope < decl.scope {
-                    low = index + 1;
-                } else {
-                    high = index;
+            if self.decls[index].0 == decl.name {
+                low = 0;
+                high = self.decls[index].1.len();
+
+                while low < high {
+                    let decl_index = (high + low) / 2;
+                    if self.decls[index].1[decl_index].scope == decl.scope {
+                        return Err(SemanticErrorType::DuplicateDeclaration(
+                            format!("Symbol {} already declared in scope {}", decl.name, decl.scope)
+                        ));
+                    } else if self.decls[index].1[decl_index].scope < decl.scope {
+                        low = decl_index + 1;
+                    } else {
+                        high = decl_index;
+                    }
                 }
-            } else if self.decls[index].name < decl.name {
+
+                self.decls[index].1.insert(low, decl);
+                return Ok(());
+            } else if self.decls[index].0 < decl.name {
                 low = index + 1;
             } else {
                 high = index;
             }
         }
 
-        self.decls.insert(low, decl);
-        Ok(low)
+        // Symbol not found, insert new symbol
+        self.decls.insert(low, (decl.name.clone(), vec![decl]));        
+        Ok(())
     }
 
     pub fn find_decl(&self, name: &String, curr_scope: usize) -> Option<&SymbolDecl> {
         let mut low: usize = 0;
         let mut high: usize = self.decls.len();
 
-        let mut greatest_scope: Option<usize> = None;
-        let mut greatest_index: Option<usize> = None;
         while low < high {
             let index: usize = (high + low) / 2;
-            if self.decls[index].name == *name {
-                if self.decls[index].scope == curr_scope {
-                    return Some(&self.decls[index]);
-                } else if self.decls[index].scope < curr_scope {
-                    if let Some(greatest_scope) = &mut greatest_scope {
-                        if self.decls[index].scope > *greatest_scope {
-                            *greatest_scope = self.decls[index].scope;
-                            greatest_index = Some(index);
-                        }
-                    } else {
-                        greatest_scope = Some(self.decls[index].scope);
-                        greatest_index = Some(index);
+            if self.decls[index].0 == *name {
+                // Search for closest parent scope containing symbol
+                let mut parent_scope = curr_scope;
+                for decl in self.decls[index].1.iter().rev() {
+                    while decl.scope < parent_scope {
+                        parent_scope = self.get_parent_scope(parent_scope);
                     }
-                    low = index + 1;
-                } else {
-                    high = index;
+
+                    if decl.scope == parent_scope {
+                        return Some(decl);
+                    }
                 }
-            } else if self.decls[index].name < *name {
+                return None;
+            } else if self.decls[index].0 < *name {
                 low = index + 1;
             } else {
                 high = index;
             }
         }
         
-        match greatest_index {
-            Some(_) => Some(&self.decls[greatest_index.unwrap()]),
-            None => None,
-        }
+        None
     }
 
     pub fn find_decl_by_id(&self, id: &DeclId) -> Option<&SymbolDecl> {
@@ -218,8 +219,8 @@ impl SymbolTable {
         self.scopes[scope].symbols.push(SymbolEntry::StatementTree(tree));
     }
 
-    pub fn add_assignment(&mut self, var: SymbolDecl, index: Option<StatementTree>, assignment: StatementTree) {
-        self.scopes[var.scope].symbols.push(
+    pub fn add_assignment(&mut self, var: SymbolDecl, index: Option<StatementTree>, assignment: StatementTree, scope: usize) {
+        self.scopes[scope].symbols.push(
             SymbolEntry::Assignment(
                 AssignmentInfo {
                     var: var.get_id(),

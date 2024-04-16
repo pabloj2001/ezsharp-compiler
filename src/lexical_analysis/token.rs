@@ -136,6 +136,50 @@ impl Token {
             Token::Scbracket => 37,
         }
     }
+
+    pub fn to_string(&self) -> String {
+        match self {
+            Token::Identifier(s) => s.clone(),
+            Token::Tint(i) => i.to_string(),
+            Token::Tdouble(d) => d.to_string(),
+            Token::Kif => String::from("if"),
+            Token::Kthen => String::from("then"),
+            Token::Kelse => String::from("else"),
+            Token::Kfi => String::from("fi"),
+            Token::Kwhile => String::from("while"),
+            Token::Kdo => String::from("do"),
+            Token::Kod => String::from("od"),
+            Token::Kdef => String::from("def"),
+            Token::Kfed => String::from("fed"),
+            Token::Kreturn => String::from("return"),
+            Token::Kand => String::from("and"),
+            Token::Kor => String::from("or"),
+            Token::Knot => String::from("not"),
+            Token::Kint => String::from("int"),
+            Token::Kdouble => String::from("double"),
+            Token::Kprint => String::from("print"),
+            Token::Oplus => String::from("+"),
+            Token::Ominus => String::from("-"),
+            Token::Omultiply => String::from("*"),
+            Token::Odivide => String::from("/"),
+            Token::Omod => String::from("%"),
+            Token::Oassign => String::from("="),
+            Token::Oequal => String::from("=="),
+            Token::Olt => String::from("<"),
+            Token::Olte => String::from("<="),
+            Token::Ogt => String::from(">"),
+            Token::Ogte => String::from(">="),
+            Token::Onot => String::from("<>"),
+            Token::Scomma => String::from(","),
+            Token::Ssemicolon => String::from(";"),
+            Token::Speriod => String::from("."),
+            Token::Soparen => String::from("("),
+            Token::Scparen => String::from(")"),
+            Token::Sobracket => String::from("["),
+            Token::Scbracket => String::from("]"),
+        }
+    
+    }
 }
 
 impl Loggable for Token {

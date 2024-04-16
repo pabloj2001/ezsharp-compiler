@@ -220,6 +220,15 @@ impl StatementTree {
             _ => Err(format!("Array size must be a constant value")),
         }
     }
+
+    pub fn get_type_size(&self) -> u32 {
+        if let Some(start) = self.start {
+            if let Some(node_type) = &self.nodes[start].node_type {
+                return node_type.get_size();
+            }
+        }
+        0
+    }
 }
 
 impl Loggable for StatementTree {

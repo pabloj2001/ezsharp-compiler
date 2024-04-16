@@ -53,7 +53,6 @@ pub fn perform_syntax_semantic_analysis(tokens: Vec<ParsedToken>) -> Result<Symb
     while !stack.is_empty() {
         match stack.pop().unwrap() {
             ProductionType::Terminal(token) => {
-                // println!("Terminal: {:?}", token);
                 if !token.equals_type(&curr_token.token) {
                     // Unexpected terminal found
                     errors.syntax_errors.push(SyntaxError::new(
@@ -80,8 +79,6 @@ pub fn perform_syntax_semantic_analysis(tokens: Vec<ParsedToken>) -> Result<Symb
                 }
             },
             ProductionType::NonTerminal(non_terminal) => {
-                // println!("Non terminal: {:?}", non_terminal);
-                
                 let production_index = table[non_terminal.to_index()][curr_token.token.to_index()];
                 match production_index {
                     Some(prod_index) => {
@@ -93,11 +90,10 @@ pub fn perform_syntax_semantic_analysis(tokens: Vec<ParsedToken>) -> Result<Symb
                         let production = &productions[prod_index];
                         for prod_elem in production.right.iter().rev() {
                             stack.push(prod_elem.clone());
-                            // println!("Pushed: {:?}", prod_elem);
                         }
                     },
                     None => {
-                        println!("No production found for {:?} and {:?}", non_terminal, curr_token.token);
+                        // println!("No production found for {:?} and {:?}", non_terminal, curr_token.token);
                         // Current non terminal does not have a production for the current token
                         errors.syntax_errors.push(SyntaxError::new(
                             SyntaxErrorType::UnexpectedToken(curr_token.token.clone()),
@@ -133,7 +129,6 @@ pub fn perform_syntax_semantic_analysis(tokens: Vec<ParsedToken>) -> Result<Symb
                 }
             },
             ProductionType::Action(action) => {
-                // println!("Action: {:?}", action);
                 let action_result = semantic_info.perform_action(&action, &prev_terminal);
                 match action_result {
                     Ok(_) => {},

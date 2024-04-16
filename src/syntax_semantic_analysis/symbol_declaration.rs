@@ -17,6 +17,27 @@ pub enum BasicType {
     Array(Box<BasicType>, u32),
 }
 
+impl BasicType {
+    pub fn get_size(&self) -> u32 {
+        match self {
+            BasicType::Int => 4,
+            BasicType::Double => 4,
+            BasicType::Function(_) => 0,
+            BasicType::Array(inner_type, size) => {
+                match **inner_type {
+                    BasicType::Int => {
+                        4 * (*size)
+                    },
+                    BasicType::Double => {
+                        4 * (*size)
+                    },
+                    _ => 0,
+                }
+            }
+        }
+    }
+}
+
 impl Loggable for BasicType {
     fn to_log_message(&self) -> String {
         match self {
@@ -95,6 +116,29 @@ impl SymbolDecl {
 
     pub fn to_var_name(&self) -> String {
         format!("{}{}", self.name, self.scope)
+    }
+
+    pub fn get_size(&self) -> u32 {
+        match &self.var_type {
+            BasicType::Array(arr_type, size) => {
+                match **arr_type {
+                    BasicType::Int => {
+                        4 * (*size)
+                    },
+                    BasicType::Double => {
+                        4 * (*size)
+                    },
+                    _ => 0,
+                }
+            },
+            BasicType::Int => {
+                4
+            },
+            BasicType::Double => {
+                4
+            },
+            _ => 0,
+        }
     }
 }
 

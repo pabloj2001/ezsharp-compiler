@@ -40,13 +40,6 @@ impl Stack {
         }
     }
 
-    pub fn peek(&self) -> Option<&ProductionType> {
-        match &self.top {
-            Some(item) => Some(&item.value),
-            None => None,
-        }
-    }
-
     pub fn is_empty(&self) -> bool {
         self.size == 0
     }
